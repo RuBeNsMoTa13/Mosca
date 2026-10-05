@@ -1,9 +1,9 @@
 # Backlog Oficial de Desenvolvimento — FlyBrain 3D
 
 > **Rastreabilidade e Governança**  
-> **Data / Hora**: 2026-10-05 02:10 (UTC-3)  
+> **Data / Hora**: 2026-10-05 03:25 (UTC-3)  
 > **Branch**: `main` (repositório local)  
-> **Commit de Referência**: `8cd57ab`  
+> **Commit de Referência**: `6b5e839`  
 > **Status**: Atualizado  
 
 Este documento é a fonte oficial única de backlog e auditoria de funcionalidades do projeto **FlyBrain 3D** (simulador neuromecânico e conectoma 3D da *Drosophila melanogaster*).
@@ -30,13 +30,17 @@ Este documento é a fonte oficial única de backlog e auditoria de funcionalidad
 
 ### 1.2. Modelo 3D da Mosca & Cinemática Biomecânica
 - [x] Construção anatômica procedural completa em Three.js (`BiologicalFly`):
-  - [x] Cabeça com antenas, aristas, probóscide móvel e olhos facetados compostos.
-  - [x] Tórax e abdômen segmentado com materiais PBR realistas.
-  - [x] Asas translúcidas com refração física (IOR 1.42), estrias e batimento oscilatório de alta frequência.
-  - [x] 6 pernas articuladas (coxa, trocânter, fêmur, tíbia e tarso).
+  - [x] Cabeça com antenas, aristas plumosas com cerdas laterais, probóscide móvel, 3 ocelos no vértex cranial e grandes olhos facetados compostos.
+  - [x] **Tórax e Escutelo**: Mesonoto quitinoso realista e **Escutelo posterior** (escudo triangular díptero entre as raízes alares) com anel cervical flexível.
+  - [x] **Abdômen Segmentado Biológico**: 6 segmentos anatômicos verdadeiros (tergitos A1 a A6 + ápice arredondado), com faixas basais âmbar e bandas pretas posteriores de melanina, além de ápice negro brilhante característico do macho de *Drosophila melanogaster*.
+  - [x] **Asas com Nervuras Autênticas e Repouso Dorsal Sem Colisão**: Posicionamento dorsolateral no mesotórax ($Y = 2.28, Z = -0.18$) com folga de $+0.11$ a $+0.63$ acima do abdômen, eliminando qualquer penetração. Traçado das nervuras alares (L1 Costa, L2 R2+3, L3 R4+5, L4 M1, L5 CuA1 e transversais r-m, m-cu) e micro-offset ($0.02$) para sobreposição natural sem z-fighting.
+  - [x] 6 pernas articuladas completas (coxa muscular no esterno, trocânter, fêmur, joelho, tíbia e tarso) com calibração precisa no piso da arena ($Y \approx 0.02 - 0.05$).
+  - [x] **Escleritos Articulares das Asas**: Bases axilares alares ancorando as asas no mesotórax e conectadas aos nervos motores alares.
+  - [x] **Haltères Metatorácicos**: Órgãos de equilíbrio giroscópicos em T3 vibrando em contrafase durante o voo.
+  - [x] **Rede Neural Motora Eferente (Fiação Asas & Pernas)**: Tratos de nervos motores bioelétricos conectando o VNC (neuromeros T1, T2 e T3) diretamente às 6 pernas e às 2 asas, com junções neuromusculares (NMJs) pulsantes sincronizadas com a marcha tripodal e voo a 210 Hz.
 - [x] Cinemática de marcha tripodal verdadeira (ondas de apoio e balanço em tripés alternados).
 - [x] Mecanismo de extensão da probóscide para alimentação.
-- [x] Transição para Modo Raio-X com exoesqueleto translúcido (vidro/esmerilhado) expondo a anatomia interna.
+- [x] Transição para Modo Raio-X com exoesqueleto translúcido (vidro/esmerilhado) cobrindo todos os materiais de cutícula e expondo a anatomia interna e a fiação neural.
 - [x] Movimentação manual pelo teclado (WASD para andar, Espaço para decolar, Shift para descer).
 - [x] **Correção do Freio de Voo (`DNp09`)**: Eliminação de locomoção no ar, descida controlada suave com postura reflexa de trem de pouso estendido e gravidade protetora no ar.
 - [x] **Controle de Voo e Hovering Estático**: Eliminação de velocidade residual de cruzeiro no ar. A mosca agora paira estática no ar (*hovering*) ao decolar e só avança se `W` for pressionado ou recua se `S` for pressionado.
@@ -44,6 +48,7 @@ Este documento é a fonte oficial única de backlog e auditoria de funcionalidad
 
 ### 1.3. Conectoma 3D & Visualizador Cerebral
 - [x] Acoplamento geométrico exato das estruturas neurais dentro da cabeça e nuca da mosca.
+- [x] **Orientação Anatômica Real do Cordão Nervoso Ventral (VNC)**: Correção da rotação do VNC (`nerve_cord`) e dos tratos motores descendentes (`DNge104` e `DNp09`). O cordão agora curva-se ~90° através do canal do pescoço (conectivo cervical) e projeta-se horizontalmente para trás ao longo do assoalho ventral do tórax e abdômen anterior, eliminando a projeção vertical errônea em direção ao solo provocada pela orientação dos eixos do volume de microscopia eletrônica de Janelia (`male-cns:v1.0`).
 - [x] Renderização de esqueleto neuronal com `THREE.LineSegments` e blending aditivo.
 - [x] Renderização de sinapses em alta performance via `THREE.InstancedMesh` (pré em ciano, pós em magenta).
 - [x] Efeito visual dinâmico de pulso sináptico luminoso propagado por interpolação.
