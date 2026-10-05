@@ -15,6 +15,37 @@ client = Client("https://neuprint.janelia.org", dataset="male-cns:v1.0", token=t
 out_dir = Path("frontend/public/data")
 out_dir.mkdir(parents=True, exist_ok=True)
 
+def transform_point(x, y, z):
+    """
+    Corrige a orientação espacial do cordão nervoso ventral (VNC) e tratos motores descendentes.
+    Em Drosophila melanogaster, o VNC curva-se ~90° pelo pescoço e repousa horizontalmente
+    ao longo do assoalho ventral do tórax e abdômen anterior.
+    """
+    y_neck = -0.6
+    y_cord_start = -2.19
+    z_cord_start = -1.80
+    if y >= y_neck:
+        return x, y, z
+    elif y <= y_cord_start:
+        dy = y - y_cord_start
+        dz = z - z_cord_start
+        return (
+            round(x * 0.85, 4),
+            round(-0.55 - dz * 0.70, 4),
+            round(-1.30 + dy * 0.72, 4)
+        )
+    else:
+        t = (y_neck - y) / (y_neck - y_cord_start)
+        s = t * t * (3 - 2 * t)
+        target_x = x * 0.85
+        target_y = -0.55 - (z - z_cord_start) * 0.70
+        target_z = -1.30
+        return (
+            round(x + s * (target_x - x), 4),
+            round(y + s * (target_y - y), 4),
+            round(z + s * (target_z - z), 4)
+        )
+
 # 1. Exportar Hulls do Cérebro
 print("Exportando Hulls do Cérebro...")
 try:
@@ -43,8 +74,13 @@ try:
             norm_pts = (pts - [cx, cy, cz]) * scale
             # Inverter Y e Z para bater com Three.js (Y para cima, Z para profundidade)
             three_pts = np.column_stack([norm_pts[:, 0], -norm_pts[:, 2], -norm_pts[:, 1]])
+            if name == "nerve_cord":
+                transformed_pts = np.array([transform_point(p[0], p[1], p[2]) for p in three_pts])
+            else:
+                transformed_pts = three_pts
+
             hulls_data[name] = {
-                "vertices": three_pts.flatten().round(4).tolist(),
+                "vertices": transformed_pts.flatten().round(4).tolist(),
                 "indices": ch.simplices.flatten().tolist(),
                 "color": color,
                 "label": label
@@ -152,14 +188,16 @@ for circ in CIRCUITOS:
                     if pid != -1 and pid in id_map:
                         p1 = id_map[row["node_id"]]
                         p2 = id_map[pid]
-                        # Converte para Three.js coords (X, -Z, -Y) centrado
+                        # Converte para Three.js coords (X, -Z, -Y) centrado e ajusta anatomia
                         x1 = round((p1[0] - cx) * scale, 4)
                         y1 = round(-(p1[2] - cz) * scale, 4)
                         z1 = round(-(p1[1] - cy) * scale, 4)
                         x2 = round((p2[0] - cx) * scale, 4)
                         y2 = round(-(p2[2] - cz) * scale, 4)
                         z2 = round(-(p2[1] - cy) * scale, 4)
-                        segments.extend([x1, y1, z1, x2, y2, z2])
+                        tx1, ty1, tz1 = transform_point(x1, y1, z1)
+                        tx2, ty2, tz2 = transform_point(x2, y2, z2)
+                        segments.extend([tx1, ty1, tz1, tx2, ty2, tz2])
 
         # Busca sinapses
         syns = fetch_synapses(neu.NeuronCriteria(type=q))
@@ -176,15 +214,17 @@ for circ in CIRCUITOS:
                 px = round((row["x"] - cx) * scale, 4)
                 py = round(-(row["z"] - cz) * scale, 4)
                 pz = round(-(row["y"] - cy) * scale, 4)
+                tpx, tpy, tpz = transform_point(px, py, pz)
                 roi = str(row["roi"]) if pd.notna(row["roi"]) else "Geral"
-                pre_list.append([px, py, pz, roi])
+                pre_list.append([tpx, tpy, tpz, roi])
 
             for _, row in post_df.iterrows():
                 px = round((row["x"] - cx) * scale, 4)
                 py = round(-(row["z"] - cz) * scale, 4)
                 pz = round(-(row["y"] - cy) * scale, 4)
+                tpx, tpy, tpz = transform_point(px, py, pz)
                 roi = str(row["roi"]) if pd.notna(row["roi"]) else "Geral"
-                post_list.append([px, py, pz, roi])
+                post_list.append([tpx, tpy, tpz, roi])
 
         circ_data = {
             **circ,
