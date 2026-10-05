@@ -154,6 +154,7 @@ class FlyBrainApp {
     bioAudio.playSpike();
     this.oscilloscope.stimulate(this.currentStimulus);
     this.connectome.pulse();
+    this.fly.pulseMotorNerves();
 
     const badge = document.getElementById('behavior-badge');
     badge.className = 'status-pill active';

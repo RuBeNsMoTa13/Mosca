@@ -27,19 +27,46 @@ export class BiologicalFly {
     // Frenagem e Pouso Biológico (DNp09)
     this.isLanding = false;
 
-    // Materiais PBR
+    // Pulso bioelétrico dos nervos motores
+    this.nervePulse = 0;
+
+    // Materiais PBR Realistas de Drosophila melanogaster
     this.cuticleMaterial = new THREE.MeshStandardMaterial({
-      color: 0x334155,
-      roughness: 0.32,
-      metalness: 0.28,
+      color: 0x2b221b,
+      roughness: 0.38,
+      metalness: 0.22,
+      transparent: true,
+      opacity: 1.0,
+    });
+
+    this.scutellumMaterial = new THREE.MeshStandardMaterial({
+      color: 0x382c22,
+      roughness: 0.35,
+      metalness: 0.20,
       transparent: true,
       opacity: 1.0,
     });
 
     this.abdomenMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd97706,
+      color: 0xc97a18,
       roughness: 0.42,
+      metalness: 0.15,
+      transparent: true,
+      opacity: 1.0,
+    });
+
+    this.abdomenStripeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1a140f,
+      roughness: 0.38,
       metalness: 0.18,
+      transparent: true,
+      opacity: 1.0,
+    });
+
+    this.abdomenTipMaterial = new THREE.MeshStandardMaterial({
+      color: 0x120d09,
+      roughness: 0.30,
+      metalness: 0.25,
       transparent: true,
       opacity: 1.0,
     });
@@ -56,28 +83,35 @@ export class BiologicalFly {
     });
 
     this.wingMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xbae6fd,
-      transmission: 0.82,
-      opacity: 0.65,
+      color: 0xe0f2fe,
+      transmission: 0.88,
+      opacity: 0.70,
       transparent: true,
       roughness: 0.08,
-      ior: 1.42,
+      ior: 1.45,
       side: THREE.DoubleSide,
       depthWrite: false
     });
 
+    this.wingVeinMaterial = new THREE.LineBasicMaterial({
+      color: 0x6d4827,
+      transparent: true,
+      opacity: 0.78,
+      linewidth: 1
+    });
+
     this.legMaterial = new THREE.MeshStandardMaterial({
-      color: 0xb45309,
-      roughness: 0.5,
-      metalness: 0.2,
+      color: 0xa16207,
+      roughness: 0.48,
+      metalness: 0.20,
       transparent: true,
       opacity: 1.0,
     });
 
     this.jointMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      roughness: 0.3,
-      metalness: 0.4,
+      color: 0xd97706,
+      roughness: 0.32,
+      metalness: 0.30,
       transparent: true,
       opacity: 1.0,
     });
@@ -85,6 +119,7 @@ export class BiologicalFly {
     this.buildBody();
     this.buildWings();
     this.buildLegs();
+    this.buildMotorNerves();
 
     // Sombra suave sob a mosca
     const shadowGeo = new THREE.CircleGeometry(1.6, 32);
@@ -100,37 +135,68 @@ export class BiologicalFly {
   }
 
   buildBody() {
-    // 1. Tórax (Mesotórax muscular)
-    const thoraxGeo = new THREE.SphereGeometry(1.2, 24, 24);
+    // 1. Tórax (Mesonoto muscular dorsal)
+    const thoraxGeo = new THREE.SphereGeometry(1.2, 28, 24);
     thoraxGeo.scale(1.0, 0.95, 1.25);
     this.thorax = new THREE.Mesh(thoraxGeo, this.cuticleMaterial);
     this.thorax.position.set(0, 1.6, 0);
     this.thorax.castShadow = true;
     this.group.add(this.thorax);
 
+    // Escutelo (Escudo triangular posterior do tórax - traço marcante dos dípteros)
+    const scutellumGeo = new THREE.ConeGeometry(0.52, 0.62, 16);
+    scutellumGeo.rotateX(Math.PI / 2);
+    scutellumGeo.scale(1.25, 0.50, 1.0);
+    this.scutellum = new THREE.Mesh(scutellumGeo, this.scutellumMaterial);
+    this.scutellum.position.set(0, 2.05, -0.92);
+    this.scutellum.castShadow = true;
+    this.group.add(this.scutellum);
+
+    // Conectivo Cervical (Pescoço flexível unindo cabeça ao tórax)
+    const neckGeo = new THREE.CylinderGeometry(0.38, 0.44, 0.45, 16);
+    neckGeo.rotateX(Math.PI / 2);
+    const neckMesh = new THREE.Mesh(neckGeo, this.cuticleMaterial);
+    neckMesh.position.set(0, 1.52, 0.85);
+    this.group.add(neckMesh);
+
     // 2. Cabeça
-    const headGeo = new THREE.SphereGeometry(0.85, 20, 20);
+    const headGeo = new THREE.SphereGeometry(0.85, 22, 20);
     headGeo.scale(1.05, 0.9, 0.95);
     this.head = new THREE.Mesh(headGeo, this.cuticleMaterial);
     this.head.position.set(0, 1.5, 1.5);
     this.head.castShadow = true;
     this.group.add(this.head);
 
-    // Olho Rubi Esquerdo
-    const eyeGeo = new THREE.SphereGeometry(0.55, 18, 18);
-    eyeGeo.scale(0.8, 1.15, 1.1);
+    // Olhos Compostos Rubi (Grandes, reniformes, facetados)
+    const eyeGeo = new THREE.SphereGeometry(0.56, 20, 20);
+    eyeGeo.scale(0.82, 1.18, 1.12);
     this.eyeL = new THREE.Mesh(eyeGeo, this.eyeMaterial);
     this.eyeL.position.set(0.65, 0.15, 0.1);
     this.eyeL.rotation.y = 0.35;
     this.head.add(this.eyeL);
 
-    // Olho Rubi Direito
     this.eyeR = new THREE.Mesh(eyeGeo, this.eyeMaterial);
     this.eyeR.position.set(-0.65, 0.15, 0.1);
     this.eyeR.rotation.y = -0.35;
     this.head.add(this.eyeR);
 
-    // Antenas e Aristídeos
+    // Ocelos (3 olhos simples no topo do crânio / vértex da mosca)
+    const ocelliMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xca8a04,
+      roughness: 0.12,
+      metalness: 0.20
+    });
+    const ocellusGeo = new THREE.SphereGeometry(0.045, 8, 8);
+    const oc1 = new THREE.Mesh(ocellusGeo, ocelliMat);
+    oc1.position.set(0, 0.78, 0.12);
+    const oc2 = new THREE.Mesh(ocellusGeo, ocelliMat);
+    oc2.position.set(0.08, 0.74, 0.02);
+    const oc3 = new THREE.Mesh(ocellusGeo, ocelliMat);
+    oc3.position.set(-0.08, 0.74, 0.02);
+    this.head.add(oc1, oc2, oc3);
+
+    // Antenas e Aristídeos Plumosos (com ramos laterais sensoriais)
     const antMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
     const antLGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0.2, 0.25, 0.6),
@@ -139,12 +205,25 @@ export class BiologicalFly {
     ]);
     this.head.add(new THREE.Line(antLGeo, antMat));
 
+    // Cerdas laterais da arista esquerda (plumose hairs)
+    const plumLGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0.35, 0.6, 1.1), new THREE.Vector3(0.48, 0.72, 1.15),
+      new THREE.Vector3(0.42, 0.7, 1.25), new THREE.Vector3(0.55, 0.82, 1.30)
+    ]);
+    this.head.add(new THREE.LineSegments(plumLGeo, antMat));
+
     const antRGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-0.2, 0.25, 0.6),
       new THREE.Vector3(-0.35, 0.6, 1.1),
       new THREE.Vector3(-0.5, 0.8, 1.4)
     ]);
     this.head.add(new THREE.Line(antRGeo, antMat));
+
+    const plumRGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.35, 0.6, 1.1), new THREE.Vector3(-0.48, 0.72, 1.15),
+      new THREE.Vector3(-0.42, 0.7, 1.25), new THREE.Vector3(-0.55, 0.82, 1.30)
+    ]);
+    this.head.add(new THREE.LineSegments(plumRGeo, antMat));
 
     // Probóscide (Aparelho bucal retrátil)
     const prGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.8, 12);
@@ -161,96 +240,198 @@ export class BiologicalFly {
     labMesh.position.set(0, -0.8, 0);
     this.proboscis.add(labMesh);
 
-    // 3. Abdômen Segmentado
-    const abGeo = new THREE.SphereGeometry(1.25, 24, 24);
-    abGeo.scale(0.95, 0.85, 1.6);
-    this.abdomen = new THREE.Mesh(abGeo, this.abdomenMaterial);
-    this.abdomen.position.set(0, 1.45, -1.6);
-    this.abdomen.rotation.x = -0.15;
-    this.abdomen.castShadow = true;
+    // 3. Abdômen Segmentado Biológico (6 Tergitos com faixas pretas e ápice escuro de Drosophila)
+    this.abdomen = new THREE.Group();
+    this.abdomen.position.set(0, 1.40, -0.80);
     this.group.add(this.abdomen);
 
-    // Anéis escuros nos segmentos do abdômen
-    for (let i = -0.8; i <= 0.8; i += 0.4) {
-      const ringGeo = new THREE.TorusGeometry(1.18, 0.04, 8, 24);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x78350f });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.position.set(0, 0, i);
-      ring.scale.set(0.95, 0.85, 1.0);
-      this.abdomen.add(ring);
-    }
+    // Segmentos anatômicos de A1 a A6
+    const segConfigs = [
+      { z: -0.10, sx: 0.84, sy: 0.60, sz: 0.36, mat: this.abdomenMaterial, stripe: true, sRatio: 0.28 },
+      { z: -0.42, sx: 0.96, sy: 0.68, sz: 0.40, mat: this.abdomenMaterial, stripe: true, sRatio: 0.32 },
+      { z: -0.78, sx: 1.00, sy: 0.70, sz: 0.42, mat: this.abdomenMaterial, stripe: true, sRatio: 0.35 },
+      { z: -1.14, sx: 0.92, sy: 0.64, sz: 0.40, mat: this.abdomenMaterial, stripe: true, sRatio: 0.42 },
+      { z: -1.48, sx: 0.78, sy: 0.54, sz: 0.38, mat: this.abdomenTipMaterial, stripe: false },
+      { z: -1.80, sx: 0.58, sy: 0.44, sz: 0.44, mat: this.abdomenTipMaterial, stripe: false }
+    ];
+
+    segConfigs.forEach((cfg) => {
+      const segGeo = new THREE.SphereGeometry(1.0, 18, 16);
+      segGeo.scale(cfg.sx, cfg.sy, cfg.sz);
+      const segMesh = new THREE.Mesh(segGeo, cfg.mat);
+      segMesh.position.set(0, 0, cfg.z);
+      segMesh.castShadow = true;
+      this.abdomen.add(segMesh);
+
+      // Faixa posterior de melanina característica de cada tergito
+      if (cfg.stripe) {
+        const stripeGeo = new THREE.SphereGeometry(1.01, 18, 16);
+        stripeGeo.scale(cfg.sx * 1.01, cfg.sy * 1.01, cfg.sz * cfg.sRatio);
+        const stripeMesh = new THREE.Mesh(stripeGeo, this.abdomenStripeMaterial);
+        stripeMesh.position.set(0, 0, cfg.z - cfg.sz * (1 - cfg.sRatio) * 0.5);
+        this.abdomen.add(stripeMesh);
+      }
+    });
   }
 
   buildWings() {
     this.wingsGroup = new THREE.Group();
-    this.wingsGroup.position.set(0, 2.1, -0.1);
+    // Posicionamento dorsolateral no mesotórax (garante que as asas repousem sobre o dorso do abdômen)
+    this.wingsGroup.position.set(0, 2.28, -0.18);
     this.group.add(this.wingsGroup);
 
-    // Geometria da asa
+    // Geometria da asa anatômica de Drosophila melanogaster
     const wingShape = new THREE.Shape();
     wingShape.moveTo(0, 0);
-    wingShape.bezierCurveTo(0.4, 0.6, 0.8, 2.2, 0.6, 3.6);
-    wingShape.bezierCurveTo(0.4, 4.4, -0.2, 4.2, -0.5, 3.2);
-    wingShape.bezierCurveTo(-0.8, 2.0, -0.5, 0.8, 0, 0);
+    wingShape.bezierCurveTo(0.35, 0.6, 0.65, 1.8, 0.60, 3.0);
+    wingShape.bezierCurveTo(0.55, 3.5, 0.25, 3.65, 0.0, 3.60);
+    wingShape.bezierCurveTo(-0.45, 3.4, -0.65, 2.2, -0.60, 1.2);
+    wingShape.bezierCurveTo(-0.45, 0.4, -0.20, 0.1, 0, 0);
 
     const wingGeo = new THREE.ShapeGeometry(wingShape);
 
-    // Asa Esquerda
-    this.wingL = new THREE.Mesh(wingGeo, this.wingMaterial);
-    this.wingL.position.set(0.5, 0, 0);
-    this.wingL.rotation.set(Math.PI / 2, -0.2, -0.3);
+    // Traçado das Nervuras Alares (L1 Costa, L2 R2+3, L3 R4+5, L4 M1, L5 CuA1 e transversais r-m, m-cu)
+    const veinPaths = [
+      [ [0, 0.1, 0.002], [0.30, 0.8, 0.002], [0.55, 1.8, 0.002], [0.58, 2.8, 0.002] ],
+      [ [0, 0.1, 0.002], [0.22, 1.0, 0.002], [0.42, 2.2, 0.002], [0.46, 3.1, 0.002] ],
+      [ [0, 0.1, 0.002], [0.12, 1.2, 0.002], [0.22, 2.4, 0.002], [0.18, 3.5, 0.002] ],
+      [ [0, 0.1, 0.002], [-0.02, 1.1, 0.002], [-0.08, 2.2, 0.002], [-0.14, 3.3, 0.002] ],
+      [ [0, 0.1, 0.002], [-0.20, 0.7, 0.002], [-0.38, 1.4, 0.002], [-0.46, 2.0, 0.002] ],
+      [ [0.14, 1.8, 0.002], [-0.06, 1.75, 0.002] ],
+      [ [-0.08, 2.3, 0.002], [-0.34, 2.1, 0.002] ]
+    ];
+
+    const createWingWithVeins = () => {
+      const wingMesh = new THREE.Mesh(wingGeo, this.wingMaterial);
+      veinPaths.forEach((pts) => {
+        const v3s = pts.map((p) => new THREE.Vector3(...p));
+        let geo;
+        if (v3s.length > 2) {
+          const curve = new THREE.CatmullRomCurve3(v3s);
+          geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(14));
+        } else {
+          geo = new THREE.BufferGeometry().setFromPoints(v3s);
+        }
+        const line = new THREE.Line(geo, this.wingVeinMaterial);
+        wingMesh.add(line);
+      });
+      return wingMesh;
+    };
+
+    // Escleritos axilares / Bases articulares alares (Hinges no mesotórax)
+    const hingeGeo = new THREE.SphereGeometry(0.12, 10, 8);
+    hingeGeo.scale(1.3, 0.7, 1.0);
+
+    // Asa Esquerda (repousa perfeitamente sobre o dorso do abdômen)
+    this.wingL = createWingWithVeins();
+    this.wingL.position.set(0.46, 0, 0);
+    this.wingL.rotation.set(-Math.PI / 2 - 0.04, 0.03, 0.10);
     this.wingsGroup.add(this.wingL);
 
-    // Asa Direita
-    this.wingR = new THREE.Mesh(wingGeo, this.wingMaterial);
-    this.wingR.position.set(-0.5, 0, 0);
-    this.wingR.rotation.set(Math.PI / 2, 0.2, 0.3);
+    this.wingHingeL = new THREE.Mesh(hingeGeo, this.jointMaterial);
+    this.wingHingeL.position.set(0.46, 0, 0);
+    this.wingsGroup.add(this.wingHingeL);
+
+    // Asa Direita (com micro-elevação de 0.02 para sobreposição natural de asas sem z-fighting)
+    this.wingR = createWingWithVeins();
+    this.wingR.position.set(-0.46, 0.02, 0);
+    this.wingR.scale.set(-1, 1, 1);
+    this.wingR.rotation.set(-Math.PI / 2 - 0.04, -0.03, -0.10);
     this.wingsGroup.add(this.wingR);
+
+    this.wingHingeR = new THREE.Mesh(hingeGeo, this.jointMaterial);
+    this.wingHingeR.position.set(-0.46, 0.02, 0);
+    this.wingsGroup.add(this.wingHingeR);
+
+    // Haltères Metatorácicos (Órgãos de Equilíbrio / Giroscópios em T3)
+    this.halteresGroup = new THREE.Group();
+    this.halteresGroup.position.set(0, 1.70, -0.48);
+    this.group.add(this.halteresGroup);
+
+    const stalkGeo = new THREE.CylinderGeometry(0.018, 0.025, 0.24, 6);
+    stalkGeo.translate(0, 0.12, 0);
+    stalkGeo.rotateZ(Math.PI / 2);
+    const bulbGeo = new THREE.SphereGeometry(0.065, 8, 8);
+    bulbGeo.scale(1.2, 0.8, 0.8);
+
+    // Haltère Esquerdo
+    this.haltereL = new THREE.Group();
+    this.haltereL.position.set(0.55, 0, 0);
+    const stalkL = new THREE.Mesh(stalkGeo, this.jointMaterial);
+    const bulbL = new THREE.Mesh(bulbGeo, this.cuticleMaterial);
+    bulbL.position.set(0.24, 0, 0);
+    this.haltereL.add(stalkL);
+    this.haltereL.add(bulbL);
+    this.halteresGroup.add(this.haltereL);
+
+    // Haltère Direito
+    this.haltereR = new THREE.Group();
+    this.haltereR.position.set(-0.55, 0, 0);
+    this.haltereR.scale.x = -1;
+    const stalkR = new THREE.Mesh(stalkGeo, this.jointMaterial);
+    const bulbR = new THREE.Mesh(bulbGeo, this.cuticleMaterial);
+    bulbR.position.set(0.24, 0, 0);
+    this.haltereR.add(stalkR);
+    this.haltereR.add(bulbR);
+    this.halteresGroup.add(this.haltereR);
   }
 
   buildLegs() {
     this.legs = [];
 
-    // Configuração das 6 pernas: [nome, x_base, y_base, z_base, lado(1 ou -1), ângulo_repouso]
+    // Configuração das 6 pernas biológicas acopladas aos 3 neuromeros do VNC (T1, T2, T3):
+    // origin: ponto de ancoragem no esterno ventral do tórax (adjacente ao VNC)
+    // root (x, y, z): articulação trocanteriana da perna
     const legConfigs = [
-      { id: 'L1', x: 0.65, y: 1.4, z: 0.6, side: 1, angle: 0.45, group: 'A' },
-      { id: 'R1', x: -0.65, y: 1.4, z: 0.6, side: -1, angle: -0.45, group: 'B' },
-      { id: 'L2', x: 0.85, y: 1.35, z: 0.0, side: 1, angle: 1.45, group: 'B' },
-      { id: 'R2', x: -0.85, y: 1.35, z: 0.0, side: -1, angle: -1.45, group: 'A' },
-      { id: 'L3', x: 0.70, y: 1.3, z: -0.6, side: 1, angle: 2.35, group: 'A' },
-      { id: 'R3', x: -0.70, y: 1.3, z: -0.6, side: -1, angle: -2.35, group: 'B' },
+      { id: 'L1', origin: [0.28, 1.10, 0.45], x: 0.58, y: 1.30, z: 0.52, side: 1, angle: 0.42, group: 'A' },
+      { id: 'R1', origin: [-0.28, 1.10, 0.45], x: -0.58, y: 1.30, z: 0.52, side: -1, angle: -0.42, group: 'B' },
+      { id: 'L2', origin: [0.38, 1.05, 0.00], x: 0.78, y: 1.25, z: 0.00, side: 1, angle: 1.45, group: 'B' },
+      { id: 'R2', origin: [-0.38, 1.05, 0.00], x: -0.78, y: 1.25, z: 0.00, side: -1, angle: -1.45, group: 'A' },
+      { id: 'L3', origin: [0.32, 1.05, -0.50], x: 0.65, y: 1.22, z: -0.54, side: 1, angle: 2.35, group: 'A' },
+      { id: 'R3', origin: [-0.32, 1.05, -0.50], x: -0.65, y: 1.22, z: -0.54, side: -1, angle: -2.35, group: 'B' },
     ];
 
     legConfigs.forEach((cfg) => {
-      const legRoot = new THREE.Group();
-      legRoot.position.set(cfg.x, cfg.y, cfg.z);
+      // 1. Coxa muscular conectando o esterno torácico à articulação da perna
+      const pOrig = new THREE.Vector3(...cfg.origin);
+      const pRoot = new THREE.Vector3(cfg.x, cfg.y, cfg.z);
+      const coxaMesh = this._createConnectingCylinder(pOrig, pRoot, 0.14, 0.10, this.cuticleMaterial);
+      this.group.add(coxaMesh);
 
-      // Coxa / Fêmur
-      const femurGeo = new THREE.CylinderGeometry(0.08, 0.06, 1.2, 10);
-      femurGeo.translate(0, -0.6, 0);
+      // 2. Base da perna no trocanter
+      const legRoot = new THREE.Group();
+      legRoot.position.copy(pRoot);
+
+      // Trocanter (junta esférica entre coxa e fêmur)
+      const trochanter = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), this.jointMaterial);
+      legRoot.add(trochanter);
+
+      // 3. Fêmur
+      const femurGeo = new THREE.CylinderGeometry(0.07, 0.055, 0.52, 10);
+      femurGeo.translate(0, -0.26, 0);
       const femur = new THREE.Mesh(femurGeo, this.legMaterial);
-      femur.rotation.z = cfg.side * 0.7;
+      femur.rotation.z = cfg.side * 0.72;
       femur.rotation.y = cfg.angle;
       legRoot.add(femur);
 
-      // Joelho (articulação)
-      const knee = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), this.jointMaterial);
-      knee.position.set(0, -1.2, 0);
+      // 4. Joelho (articulação)
+      const knee = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), this.jointMaterial);
+      knee.position.set(0, -0.52, 0);
       femur.add(knee);
 
-      // Tíbia
-      const tibiaGeo = new THREE.CylinderGeometry(0.05, 0.035, 1.3, 10);
-      tibiaGeo.translate(0, -0.65, 0);
+      // 5. Tíbia
+      const tibiaGeo = new THREE.CylinderGeometry(0.045, 0.03, 0.58, 10);
+      tibiaGeo.translate(0, -0.29, 0);
       const tibia = new THREE.Mesh(tibiaGeo, this.legMaterial);
-      tibia.rotation.z = -cfg.side * 0.9;
+      tibia.rotation.z = -cfg.side * 0.88;
       knee.add(tibia);
 
-      // Tarso / Pata (toca o chão)
-      const tarsusGeo = new THREE.CylinderGeometry(0.03, 0.015, 0.6, 8);
-      tarsusGeo.translate(0, -0.3, 0.1);
+      // 6. Tarso / Pata (toca o chão perfeitamente sem entrar no solo)
+      const tarsusGeo = new THREE.CylinderGeometry(0.025, 0.015, 0.26, 8);
+      tarsusGeo.translate(0, -0.13, 0.04);
       const tarsus = new THREE.Mesh(tarsusGeo, this.legMaterial);
-      tarsus.rotation.x = -0.5;
-      tarsus.position.set(0, -1.3, 0);
+      tarsus.rotation.x = -0.4;
+      tarsus.position.set(0, -0.58, 0);
       tibia.add(tarsus);
 
       this.group.add(legRoot);
@@ -258,14 +439,139 @@ export class BiologicalFly {
       this.legs.push({
         id: cfg.id,
         root: legRoot,
+        coxa: coxaMesh,
         femur,
         knee,
         tibia,
+        tarsus,
         baseAngle: cfg.angle,
         side: cfg.side,
         group: cfg.group,
       });
     });
+  }
+
+  buildMotorNerves() {
+    this.motorNervesGroup = new THREE.Group();
+    this.motorNervesGroup.visible = false;
+    this.group.add(this.motorNervesGroup);
+
+    // Material de nervo eferente luminoso (Ciano elétrico bioativo com AdditiveBlending)
+    this.motorNerveMaterial = new THREE.LineBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
+
+    // Material de junções neuromusculares (NMJ - Botões sinápticos dourados)
+    this.nmjMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfbbf24,
+      transparent: true,
+      opacity: 0.95
+    });
+
+    const nmjGeo = new THREE.SphereGeometry(0.055, 8, 8);
+
+    // 1. Nervos Motores das 6 Pernas (ligando os neuromeros T1, T2, T3 do VNC às Coxas)
+    const legNervePaths = [
+      { vnc: [0.10, 1.10, 0.45], coxaMid: [0.35, 1.18, 0.48], term: [0.58, 1.30, 0.52], group: 'A' },
+      { vnc: [-0.10, 1.10, 0.45], coxaMid: [-0.35, 1.18, 0.48], term: [-0.58, 1.30, 0.52], group: 'B' },
+      { vnc: [0.14, 1.05, 0.00], coxaMid: [0.45, 1.12, 0.00], term: [0.78, 1.25, 0.00], group: 'B' },
+      { vnc: [-0.14, 1.05, 0.00], coxaMid: [-0.45, 1.12, 0.00], term: [-0.78, 1.25, 0.00], group: 'A' },
+      { vnc: [0.10, 1.05, -0.50], coxaMid: [0.38, 1.12, -0.52], term: [0.65, 1.22, -0.54], group: 'A' },
+      { vnc: [-0.10, 1.05, -0.50], coxaMid: [-0.38, 1.12, -0.52], term: [-0.65, 1.22, -0.54], group: 'B' },
+    ];
+
+    this.legNerveLines = [];
+    legNervePaths.forEach((lp) => {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(...lp.vnc),
+        new THREE.Vector3(...lp.coxaMid),
+        new THREE.Vector3(...lp.term)
+      ]);
+      const pts = curve.getPoints(8);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, this.motorNerveMaterial.clone());
+      this.motorNervesGroup.add(line);
+      this.legNerveLines.push({ line, group: lp.group });
+
+      // NMJ no trocanter
+      const nmj = new THREE.Mesh(nmjGeo, this.nmjMaterial);
+      nmj.position.set(...lp.term);
+      this.motorNervesGroup.add(nmj);
+
+      // Fibrilas musculares secundárias na coxa
+      const fib1Geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...lp.coxaMid),
+        new THREE.Vector3(lp.term[0] * 0.85, lp.term[1] - 0.08, lp.term[2] + 0.06)
+      ]);
+      this.motorNervesGroup.add(new THREE.Line(fib1Geo, this.motorNerveMaterial));
+    });
+
+    // 2. Nervos Motores Alares (Wing Motor Nerves de T2 subindo aos escleritos das Asas)
+    const wingNervePaths = [
+      { vnc: [0.12, 1.15, -0.05], mid: [0.35, 1.70, -0.12], term: [0.46, 2.26, -0.18] },
+      { vnc: [-0.12, 1.15, -0.05], mid: [-0.35, 1.70, -0.12], term: [-0.46, 2.26, -0.18] }
+    ];
+
+    this.wingNerveLines = [];
+    wingNervePaths.forEach((wp) => {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(...wp.vnc),
+        new THREE.Vector3(...wp.mid),
+        new THREE.Vector3(...wp.term)
+      ]);
+      const pts = curve.getPoints(14);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, this.motorNerveMaterial.clone());
+      this.motorNervesGroup.add(line);
+      this.wingNerveLines.push(line);
+
+      // NMJ sináptica na base da asa
+      const nmj = new THREE.Mesh(nmjGeo, this.nmjMaterial);
+      nmj.position.set(...wp.term);
+      this.motorNervesGroup.add(nmj);
+
+      // Fibrilas nos músculos indiretos de voo (DVM/DLM no mesotórax)
+      const dvmGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...wp.mid),
+        new THREE.Vector3(wp.mid[0] * 0.7, wp.mid[1] + 0.15, wp.mid[2] + 0.18)
+      ]);
+      this.motorNervesGroup.add(new THREE.Line(dvmGeo, this.motorNerveMaterial));
+
+      const dlmGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...wp.mid),
+        new THREE.Vector3(wp.mid[0] * 0.6, wp.mid[1] + 0.18, wp.mid[2] - 0.22)
+      ]);
+      this.motorNervesGroup.add(new THREE.Line(dlmGeo, this.motorNerveMaterial));
+    });
+
+    // 3. Nervos dos Haltères (Sensoriomotor de T3 aos giroscópios)
+    const haltereNerves = [
+      { vnc: [0.10, 1.08, -0.48], term: [0.55, 1.70, -0.48] },
+      { vnc: [-0.10, 1.08, -0.48], term: [-0.55, 1.70, -0.48] }
+    ];
+    haltereNerves.forEach((hp) => {
+      const hGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...hp.vnc),
+        new THREE.Vector3(...hp.term)
+      ]);
+      this.motorNervesGroup.add(new THREE.Line(hGeo, this.motorNerveMaterial));
+    });
+  }
+
+  // Helper para cilindros de conexão direcional
+  _createConnectingCylinder(p1, p2, r1, r2, material) {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const len = dir.length();
+    const geo = new THREE.CylinderGeometry(r2, r1, len, 10);
+    geo.translate(0, len / 2, 0);
+    geo.rotateX(Math.PI / 2);
+    const mesh = new THREE.Mesh(geo, material);
+    mesh.position.copy(p1);
+    mesh.lookAt(p2);
+    return mesh;
   }
 
   // Acionamento do Freio de Pouso & Desaceleração (Sinapse DNp09)
@@ -309,7 +615,7 @@ export class BiologicalFly {
 
     // Respiração sutil do abdômen
     const breath = 1.0 + 0.025 * Math.sin(time * 3.5);
-    this.abdomen.scale.set(0.95 * breath, 0.85 * breath, 1.6);
+    this.abdomen.scale.set(breath, breath, 1.0);
 
     // 2. Extensão da probóscide para lamber o açúcar ao chegar perto
     if (this.isFeeding) {
@@ -328,16 +634,19 @@ export class BiologicalFly {
       this.isWalking = false;
       this.y = Math.max(0, this.y - dt * 5.8);
 
-      // Desaceleração suave das asas
+      // Desaceleração suave das asas e haltères (recolhendo para trás sobre o abdômen)
       this.wingAngle += dt * 38;
-      this.wingL.rotation.z = Math.sin(this.wingAngle) * 0.4 - 0.2;
-      this.wingR.rotation.z = -Math.sin(this.wingAngle) * 0.4 + 0.2;
+      const landFlap = Math.sin(this.wingAngle) * 0.15;
+      this.wingL.rotation.set(-Math.PI / 2 - 0.04, 0.03, 0.10 - landFlap * 0.4);
+      this.wingR.rotation.set(-Math.PI / 2 - 0.04, -0.03, -0.10 + landFlap * 0.4);
+      if (this.haltereL) this.haltereL.rotation.z = -Math.sin(this.wingAngle) * 0.3;
+      if (this.haltereR) this.haltereR.rotation.z = Math.sin(this.wingAngle) * 0.3;
 
       // Postura de trem de pouso reflexo (landing response: pernas estendidas prontas para o choque)
       this.legs.forEach((leg) => {
-        leg.femur.rotation.y = leg.baseAngle + 0.12 * leg.side;
-        leg.femur.rotation.z = leg.side * 0.48;
-        leg.tibia.rotation.z = -leg.side * 0.85;
+        leg.femur.rotation.y = leg.baseAngle + 0.10 * leg.side;
+        leg.femur.rotation.z = leg.side * 0.65;
+        leg.tibia.rotation.z = -leg.side * 0.82;
       });
 
       // Tocou o solo!
@@ -351,8 +660,13 @@ export class BiologicalFly {
     } else if (this.isFlying) {
       this.isWalking = false;
       this.wingAngle += dt * 85; // Alta velocidade alar (210 Hz biológico)
-      this.wingL.rotation.z = Math.sin(this.wingAngle) * 0.75 - 0.3;
-      this.wingR.rotation.z = -Math.sin(this.wingAngle) * 0.75 + 0.3;
+      // Asas abertas lateralmente e batendo em alta frequência
+      const flap = Math.sin(this.wingAngle) * 0.45;
+      this.wingL.rotation.set(-Math.PI / 2 + flap * 0.35, flap * 0.20, -1.25 + flap * 0.25);
+      this.wingR.rotation.set(-Math.PI / 2 + flap * 0.35, -flap * 0.20, 1.25 - flap * 0.25);
+      if (this.haltereL) this.haltereL.rotation.z = -Math.sin(this.wingAngle) * 0.6;
+      if (this.haltereR) this.haltereR.rotation.z = Math.sin(this.wingAngle) * 0.6;
+
       // Pernas recolhidas suavemente durante o voo aerodinâmico
       this.legs.forEach((leg) => {
         leg.femur.rotation.y = leg.baseAngle;
@@ -372,9 +686,12 @@ export class BiologicalFly {
       }
 
       if (this.isWalking && this.y <= 0.05) {
-        // Vibração alar sutil ao caminhar
-        this.wingL.rotation.z = -0.3 + 0.05 * Math.sin(time * 12);
-        this.wingR.rotation.z = 0.3 - 0.05 * Math.sin(time * 12);
+        // Vibração alar sutil dobrada sobre o abdômen ao caminhar
+        const scissor = 0.03 * Math.sin(time * 12);
+        this.wingL.rotation.set(-Math.PI / 2 - 0.04, 0.03, 0.10 + scissor);
+        this.wingR.rotation.set(-Math.PI / 2 - 0.04, -0.03, -0.10 - scissor);
+        if (this.haltereL) this.haltereL.rotation.z = 0;
+        if (this.haltereR) this.haltereR.rotation.z = 0;
 
         // Marcha Tripodal Biológica Real (Tripod Gait)
         this.gaitPhase += dt * 7.5; // Frequência da caminhada
@@ -391,22 +708,24 @@ export class BiologicalFly {
           const phaseOffset = leg.group === 'A' ? 0 : Math.PI;
           const phase = this.gaitPhase + phaseOffset;
 
-          // Swing: perna levanta e avança; Stance: perna apoia e empurra para trás
+          // Swing: perna levanta e avança; Stance: perna apoia no solo
           const swing = Math.sin(phase);
           const lift = Math.max(0, swing); // só sobe na fase positiva
 
-          leg.femur.rotation.y = leg.baseAngle + Math.cos(phase) * 0.32 * leg.side;
-          leg.femur.rotation.z = leg.side * (0.7 - lift * 0.38);
-          leg.tibia.rotation.z = -leg.side * (0.9 + lift * 0.45);
+          leg.femur.rotation.y = leg.baseAngle + Math.cos(phase) * 0.24 * leg.side;
+          leg.femur.rotation.z = leg.side * (0.72 - lift * 0.26);
+          leg.tibia.rotation.z = -leg.side * (0.88 + lift * 0.28);
         });
 
         // Oscilação vertical e lateral sutil do corpo ao caminhar
-        this.thorax.position.y = 1.6 + 0.06 * Math.abs(Math.sin(this.gaitPhase * 2));
-        this.head.position.y = 1.5 + 0.04 * Math.sin(this.gaitPhase * 2);
+        this.thorax.position.y = 1.6 + 0.04 * Math.abs(Math.sin(this.gaitPhase * 2));
+        this.head.position.y = 1.5 + 0.03 * Math.sin(this.gaitPhase * 2);
       } else {
-        // Posição de repouso das asas
-        this.wingL.rotation.set(Math.PI / 2, -0.15, -0.3);
-        this.wingR.rotation.set(Math.PI / 2, 0.15, 0.3);
+        // Posição de repouso das asas: dobradas elegantemente para TRÁS (-Z) sobre o abdômen
+        this.wingL.rotation.set(-Math.PI / 2 - 0.04, 0.03, 0.10);
+        this.wingR.rotation.set(-Math.PI / 2 - 0.04, -0.03, -0.10);
+        if (this.haltereL) this.haltereL.rotation.z = 0;
+        if (this.haltereR) this.haltereR.rotation.z = 0;
 
         // Repouso ou Limpeza de Patas (Grooming)
         const isGrooming = Math.sin(time * 0.6) > 0.7;
@@ -415,17 +734,68 @@ export class BiologicalFly {
           if (isGrooming && (leg.id === 'L1' || leg.id === 'R1')) {
             // As duas patas dianteiras esfregam uma na outra
             const rub = Math.sin(time * 18);
-            leg.femur.rotation.y = leg.baseAngle + rub * 0.18;
-            leg.femur.rotation.z = leg.side * 0.85;
-            leg.tibia.rotation.z = -leg.side * 0.6 + rub * 0.2;
+            leg.femur.rotation.y = leg.baseAngle + rub * 0.16;
+            leg.femur.rotation.z = leg.side * 0.78;
+            leg.tibia.rotation.z = -leg.side * 0.75 + rub * 0.12;
           } else {
             leg.femur.rotation.y = leg.baseAngle;
-            leg.femur.rotation.z = leg.side * 0.7;
-            leg.tibia.rotation.z = -leg.side * 0.9;
+            leg.femur.rotation.z = leg.side * 0.72;
+            leg.tibia.rotation.z = -leg.side * 0.88;
           }
         });
         this.thorax.position.y = 1.6;
         this.head.position.y = 1.5;
+      }
+    }
+
+    // 4. Bioeletricidade dos Nervos Motores Eferentes (Asas e Pernas)
+    if (this.nervePulse > 0) {
+      this.nervePulse = Math.max(0, this.nervePulse - dt * 3.5);
+    }
+
+    if (this.motorNervesGroup && this.motorNervesGroup.visible) {
+      const pulseColor = new THREE.Color(0x00f0ff).lerp(new THREE.Color(0xffd700), this.nervePulse);
+
+      if (this.isFlying) {
+        // Voo: pulsos de alta frequência (210 Hz) nos nervos das asas
+        const shimmer = 0.65 + 0.35 * Math.sin(time * 45);
+        if (this.wingNerveLines) {
+          this.wingNerveLines.forEach((l) => {
+            l.material.color = pulseColor;
+            l.material.opacity = shimmer;
+          });
+        }
+      } else {
+        if (this.wingNerveLines) {
+          this.wingNerveLines.forEach((l) => {
+            l.material.color = pulseColor;
+            l.material.opacity = 0.5 + this.nervePulse * 0.5;
+          });
+        }
+      }
+
+      if (this.isWalking) {
+        // Marcha: ativação motora alternada entre Tripé A e Tripé B
+        const tripA = 0.4 + 0.6 * Math.max(0, Math.sin(this.gaitPhase));
+        const tripB = 0.4 + 0.6 * Math.max(0, Math.sin(this.gaitPhase + Math.PI));
+        if (this.legNerveLines) {
+          this.legNerveLines.forEach((ln) => {
+            const intensity = ln.group === 'A' ? tripA : tripB;
+            ln.line.material.color = pulseColor;
+            ln.line.material.opacity = 0.4 + intensity * 0.5 + this.nervePulse * 0.3;
+          });
+        }
+      } else {
+        if (this.legNerveLines) {
+          this.legNerveLines.forEach((ln) => {
+            ln.line.material.color = pulseColor;
+            ln.line.material.opacity = 0.6 + this.nervePulse * 0.4;
+          });
+        }
+      }
+
+      if (this.nmjMaterial) {
+        this.nmjMaterial.color = new THREE.Color(0xfbbf24).lerp(new THREE.Color(0xffffff), this.nervePulse);
       }
     }
 
@@ -611,17 +981,36 @@ export class BiologicalFly {
     bioAudio.playWingFlutter();
   }
 
+  // Pulso elétrico propagando comandos aos nervos motores de asas e pernas
+  pulseMotorNerves() {
+    this.nervePulse = 1.0;
+  }
+
   // Alterna o Modo Raio-X (Exoesqueleto Translúcido)
   setXRayMode(enabled) {
     this.isXRay = enabled;
     const targetOpacity = enabled ? 0.12 : 1.0;
     const targetDepth = !enabled;
 
-    [this.cuticleMaterial, this.abdomenMaterial, this.legMaterial].forEach((mat) => {
-      mat.opacity = targetOpacity;
-      mat.depthWrite = targetDepth;
+    [
+      this.cuticleMaterial,
+      this.scutellumMaterial,
+      this.abdomenMaterial,
+      this.abdomenStripeMaterial,
+      this.abdomenTipMaterial,
+      this.legMaterial,
+      this.jointMaterial
+    ].forEach((mat) => {
+      if (mat) {
+        mat.opacity = targetOpacity;
+        mat.depthWrite = targetDepth;
+      }
     });
 
     this.eyeMaterial.opacity = enabled ? 0.45 : 1.0;
+
+    if (this.motorNervesGroup) {
+      this.motorNervesGroup.visible = enabled;
+    }
   }
 }
