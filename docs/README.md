@@ -1,9 +1,9 @@
 # Índice Geral de Documentação — FlyBrain 3D
 
 > **Rastreabilidade e Governança**  
-> **Data / Hora**: 2026-10-05 01:25 (UTC-3)  
+> **Data / Hora**: 2026-10-05 02:10 (UTC-3)  
 > **Branch**: `main` (repositório local)  
-> **Commit de Referência**: `inicial`  
+> **Commit de Referência**: `8cd57ab`  
 > **Status**: Atualizado  
 
 Bem-vindo à documentação oficial do **FlyBrain 3D**, um simulador interativo neuromecânico e de conectoma 3D da *Drosophila melanogaster*.

@@ -1,9 +1,9 @@
 # Backlog Oficial de Desenvolvimento — FlyBrain 3D
 
 > **Rastreabilidade e Governança**  
-> **Data / Hora**: 2026-10-05 01:25 (UTC-3)  
+> **Data / Hora**: 2026-10-05 02:10 (UTC-3)  
 > **Branch**: `main` (repositório local)  
-> **Commit de Referência**: `inicial`  
+> **Commit de Referência**: `8cd57ab`  
 > **Status**: Atualizado  
 
 Este documento é a fonte oficial única de backlog e auditoria de funcionalidades do projeto **FlyBrain 3D** (simulador neuromecânico e conectoma 3D da *Drosophila melanogaster*).
@@ -38,6 +38,9 @@ Este documento é a fonte oficial única de backlog e auditoria de funcionalidad
 - [x] Mecanismo de extensão da probóscide para alimentação.
 - [x] Transição para Modo Raio-X com exoesqueleto translúcido (vidro/esmerilhado) expondo a anatomia interna.
 - [x] Movimentação manual pelo teclado (WASD para andar, Espaço para decolar, Shift para descer).
+- [x] **Correção do Freio de Voo (`DNp09`)**: Eliminação de locomoção no ar, descida controlada suave com postura reflexa de trem de pouso estendido e gravidade protetora no ar.
+- [x] **Controle de Voo e Hovering Estático**: Eliminação de velocidade residual de cruzeiro no ar. A mosca agora paira estática no ar (*hovering*) ao decolar e só avança se `W` for pressionado ou recua se `S` for pressionado.
+- [x] **Sistema de Fome & Metabolismo Dinâmico**: Gasto energético em repouso (0.5x), solo (1.2x) e voo acelerado (2.4x / 210 Hz), com saciação rápida ao alimentar-se do néctar.
 
 ### 1.3. Conectoma 3D & Visualizador Cerebral
 - [x] Acoplamento geométrico exato das estruturas neurais dentro da cabeça e nuca da mosca.
@@ -54,23 +57,26 @@ Este documento é a fonte oficial única de backlog e auditoria de funcionalidad
 - [x] Renderização em Canvas 2D com estética cibernética (grade em mV, linha pontilhada de repouso, brilho neon).
 - [x] Contador de disparos (*spikes*) e indicador de voltagem em tempo real.
 - [x] Injeção de pulso de corrente elétrica ajustável.
+- [x] Disparos dopaminérgicos acoplados ao consumo de glicose do morango.
 
 ### 1.5. Ambiente 3D & Iluminação
 - [x] Arena circular tecnológica com grid holográfico e iluminação PBR com sombras suaves (PCFSoftShadowMap).
-- [x] Modelo 3D de fruta/recompensa com partículas de aroma flutuantes.
+- [x] **Pequeno Morango Realista**: Modelo 3D anatômico cônico proporcional à mosca, com 80 aquênios (sementes) douradas, cálice de 7 sépalas verdes, cabinho curvado e ondas de aroma adocicado.
 - [x] Partículas de poeira ambiental em suspensão.
 
 ### 1.6. Áudio Procedural (Web Audio API)
 - [x] Síntese procedural de zumbido de asas dependente da frequência motora.
 - [x] Estalidos bioelétricos sincronizados com os *spikes* do osciloscópio.
-- [x] Efeitos de passos mecânicos no solo.
+- [x] Efeitos de passos mecânicos no solo e repouso.
 
 ### 1.7. Interface HUD & Experiência do Usuário
 - [x] Barra superior com seletor de circuito, botões de modo (Arena, Raio-X, Visão Dupla).
-- [x] Painel de Telemetria Biomecânica recolhível com dados em tempo real.
+- [x] **Medidor de Fome Compacto**: Mini-barra de glicose na barra superior com porcentagem em tempo real.
+- [x] **Card de Fome Biológica**: Telemetria biomecânica com taxa metabólica instantânea e botão de ação rápida para alimentar a mosca.
+- [x] **Tutorial Interativo das Sinapses**: Modal didático completo explicando cada um dos 6 circuitos biológicos (`MBON03`, `ExR5`, `DNge104`, `s-LNv`, `MBON01`, `DNp09`), o osciloscópio LIF e botão para testar cada circuito em tempo real.
 - [x] Painel Neurocientífico com osciloscópio integrado e estatísticas do circuito.
 - [x] Modo imersivo (ocultar HUD com tecla H) e tela cheia.
-- [x] Guia de atalhos de teclado (tecla K).
+- [x] Guia de atalhos de teclado (tecla K), com novos atalhos [T] (Tutorial) e [F] (Comer).
 
 ---
 
