@@ -52,6 +52,18 @@
         </div>
 
         <div class="top-actions">
+          <div class="hunger-pill-nav" id="nav-hunger-pill" title="Nível de Fome Biológica (Consumo de Glicose)">
+            <span class="hunger-icon">🍓</span>
+            <div class="hunger-nav-track">
+              <div class="hunger-nav-fill" id="nav-hunger-fill" style="width: 42%;"></div>
+            </div>
+            <span class="hunger-nav-text" id="nav-hunger-text">42% Fome</span>
+          </div>
+
+          <button id="btn-tutorial" class="nav-cta-btn" title="Abrir Tutorial e Guia das Sinapses [T]">
+            📖 Tutorial Sinapses
+          </button>
+
           <button id="btn-audio" class="icon-btn" title="Alternar Efeitos Sonoros Biológicos">
             🔊
           </button>
@@ -112,6 +124,26 @@
           <div class="tele-item">
             <span class="tele-label">Frequência Alar</span>
             <span id="tele-wing-hz" class="tele-val">0 Hz</span>
+          </div>
+        </div>
+
+        <!-- Card de Fome Biológica & Consumo de Glicose -->
+        <div class="hunger-card">
+          <div class="hunger-card-header">
+            <div class="hunger-title-group">
+              <span class="hunger-title">🍓 FOME BIOLÓGICA</span>
+              <span id="tele-hunger-badge" class="hunger-badge moderate">APETITE MODERADO</span>
+            </div>
+            <span id="tele-hunger-percent" class="hunger-percent-val">42%</span>
+          </div>
+          <div class="hunger-bar-container">
+            <div id="tele-hunger-fill" class="hunger-bar-fill" style="width: 42%;"></div>
+          </div>
+          <div class="hunger-footer">
+            <span id="tele-hunger-burn" class="hunger-burn-rate">⚡ Gasto: Solo (1.2x)</span>
+            <button id="btn-feed-fly" class="hunger-feed-btn" title="Caminhar até o pequeno morango e se alimentar [F]">
+              🍓 Ir Comer Morango
+            </button>
           </div>
         </div>
 
@@ -176,6 +208,11 @@
           </div>
         </div>
 
+        <!-- Botão Tutorial no Painel -->
+        <button id="btn-open-tutorial-neuro" class="neuro-tutorial-action-btn" title="Abrir Guia Didático das Sinapses">
+          📖 O que cada sinapse faz? Ver Tutorial
+        </button>
+
         <!-- Câmeras Rápidas -->
         <div class="camera-presets-box">
           <span class="cam-box-title">🎥 CÂMERAS 3D (OU TECLAS [1]-[5]):</span>
@@ -211,7 +248,17 @@
           <div class="kbd-divider"></div>
           <div class="kbd-pill">
             <span class="kbd-keys"><kbd>E</kbd></span>
-            <span class="kbd-label">⚡ Injetar Sinapse</span>
+            <span class="kbd-label">⚡ Injetar</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>T</kbd></span>
+            <span class="kbd-label">📖 Tutorial</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>F</kbd></span>
+            <span class="kbd-label">🍓 Comer</span>
           </div>
           <div class="kbd-divider"></div>
           <div class="kbd-pill">
@@ -257,6 +304,36 @@
         <div id="tooltip-title" class="tooltip-title">Pré-sinapse</div>
         <div id="tooltip-roi" class="tooltip-body">ROI: EB</div>
         <div id="tooltip-coords" class="tooltip-coords">XYZ: (48200, 32100, 34500)</div>
+      </div>
+
+      <!-- Modal do Tutorial Neurocientífico das Sinapses -->
+      <div id="tutorial-modal" class="tutorial-modal-overlay hidden">
+        <div class="tutorial-card">
+          <div class="tutorial-header">
+            <div class="tutorial-title-area">
+              <span class="tutorial-badge">CONECTOMA JANELIA • MALE-CNS:V1.0</span>
+              <h2 class="tutorial-title">🧠 Guia das Sinapses: O Que Cada Uma Faz?</h2>
+              <p class="tutorial-subtitle">Entenda a neurobiologia real e o comportamento motor de cada circuito da mosca</p>
+            </div>
+            <button id="btn-close-tutorial" class="tutorial-close-btn" title="Fechar Tutorial [ESC]">✕</button>
+          </div>
+
+          <!-- Abas de Navegação -->
+          <div class="tutorial-tabs-bar" id="tutorial-tabs">
+            <button class="tut-tab-btn active" data-circuit="MBON03">🍓 MBON03 (Fome)</button>
+            <button class="tut-tab-btn" data-circuit="ExR5">🧭 ExR5 (Bússola)</button>
+            <button class="tut-tab-btn" data-circuit="DNge104">⚡ DNge104 (Fuga)</button>
+            <button class="tut-tab-btn" data-circuit="s-LNv">⏰ s-LNv (Relógio)</button>
+            <button class="tut-tab-btn" data-circuit="MBON01">🧠 MBON01 (Memória)</button>
+            <button class="tut-tab-btn" data-circuit="DNp09">🛑 DNp09 (Freio)</button>
+            <button class="tut-tab-btn bio-tab" data-circuit="BIO">⚡ LIF & Fisiologia</button>
+          </div>
+
+          <!-- Conteúdo da Aba Selecionada -->
+          <div class="tutorial-body" id="tutorial-content-body">
+            <!-- Injetado dinamicamente via JS -->
+          </div>
+        </div>
       </div>
     </div>
 

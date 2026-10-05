@@ -80,68 +80,135 @@ export class VirtualArena {
     this.fruitGroup = new THREE.Group();
     this.fruitGroup.position.copy(this.fruitPos);
 
-    // 1. Corpo volumétrico da fruta (morangos / frutas doces)
-    const fruitGeo = new THREE.SphereGeometry(1.8, 24, 24);
-    fruitGeo.scale(1.0, 1.25, 1.0);
-    const fruitMat = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      roughness: 0.25,
-      metalness: 0.1,
-      bumpScale: 0.05
+    // 1. Corpo volumétrico do pequeno morango (LatheGeometry com curva cônica anatômica)
+    const strawberryPoints = [
+      new THREE.Vector2(0.00, 0.02),   // ponta inferior (tocando o chão da arena)
+      new THREE.Vector2(0.16, 0.16),
+      new THREE.Vector2(0.34, 0.40),
+      new THREE.Vector2(0.52, 0.72),
+      new THREE.Vector2(0.68, 1.05),
+      new THREE.Vector2(0.78, 1.38),   // ombro mais largo do morango
+      new THREE.Vector2(0.72, 1.62),
+      new THREE.Vector2(0.55, 1.82),   // topo arredondado
+      new THREE.Vector2(0.28, 1.92),
+      new THREE.Vector2(0.08, 1.86),   // concavidade onde entra o cabinho
+      new THREE.Vector2(0.00, 1.84)
+    ];
+
+    const strawberryGeo = new THREE.LatheGeometry(strawberryPoints, 32);
+    const strawberryMat = new THREE.MeshPhysicalMaterial({
+      color: 0xe11d48, // Vermelho rubi vibrante de morango fresco
+      roughness: 0.28,
+      metalness: 0.06,
+      clearcoat: 0.82,
+      clearcoatRoughness: 0.16,
+      reflectivity: 0.6
     });
-    this.fruitMesh = new THREE.Mesh(fruitGeo, fruitMat);
-    this.fruitMesh.position.y = 1.9;
+
+    this.fruitMesh = new THREE.Mesh(strawberryGeo, strawberryMat);
     this.fruitMesh.castShadow = true;
     this.fruitGroup.add(this.fruitMesh);
 
-    // 2. Coroa e folhas verdes do caule
-    const stemMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.4 });
-    const stalkGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.8, 8);
-    const stalk = new THREE.Mesh(stalkGeo, stemMat);
-    stalk.position.set(0, 3.8, 0);
-    stalk.rotation.z = 0.2;
-    this.fruitGroup.add(stalk);
+    // 2. Sementinhas douradas realistas (Aquênios) distribuídas na casca
+    const seedGeo = new THREE.SphereGeometry(0.035, 6, 6);
+    seedGeo.scale(0.8, 1.3, 0.8);
+    const seedMat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      roughness: 0.38,
+      metalness: 0.22
+    });
 
-    for (let i = 0; i < 5; i++) {
-      const ang = (i * 2 * Math.PI) / 5;
-      const leafGeo = new THREE.ConeGeometry(0.35, 1.2, 5);
-      const leaf = new THREE.Mesh(leafGeo, stemMat);
-      leaf.position.set(Math.cos(ang) * 0.6, 3.5, Math.sin(ang) * 0.6);
-      leaf.rotation.set(0.6 * Math.sin(ang), ang, 0.6 * Math.cos(ang));
+    const seedCount = 80;
+    this.seedsMesh = new THREE.InstancedMesh(seedGeo, seedMat, seedCount);
+    const dummy = new THREE.Object3D();
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    const goldenAngle = 2 * Math.PI * (1 - 1 / goldenRatio);
+
+    for (let i = 0; i < seedCount; i++) {
+      const t = (i + 1) / (seedCount + 1); // 0 a 1
+      const y = 0.18 + t * 1.58;
+      // Perfil aproximado do raio nesta altura
+      let r = 0.76 * Math.sin(t * Math.PI * 0.92);
+      if (t > 0.72) r *= 1.0 - (t - 0.72) * 0.75;
+      r = Math.max(0.12, r * 1.02);
+
+      const theta = i * goldenAngle;
+      const x = Math.cos(theta) * r;
+      const z = Math.sin(theta) * r;
+
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(0, theta, 0);
+      dummy.updateMatrix();
+      this.seedsMesh.setMatrixAt(i, dummy.matrix);
+    }
+    this.seedsMesh.instanceMatrix.needsUpdate = true;
+    this.fruitGroup.add(this.seedsMesh);
+
+    // 3. Cálice de sépalas verdes (Folhas no topo do morango)
+    const calyxMat = new THREE.MeshStandardMaterial({
+      color: 0x16a34a,
+      roughness: 0.42,
+      side: THREE.DoubleSide
+    });
+
+    const numLeaves = 7;
+    for (let i = 0; i < numLeaves; i++) {
+      const ang = (i * 2 * Math.PI) / numLeaves;
+      const leafShape = new THREE.Shape();
+      leafShape.moveTo(0, 0);
+      leafShape.quadraticCurveTo(0.16, 0.32, 0.0, 0.68);
+      leafShape.quadraticCurveTo(-0.16, 0.32, 0, 0);
+      const leafGeo = new THREE.ShapeGeometry(leafShape);
+      const leaf = new THREE.Mesh(leafGeo, calyxMat);
+      leaf.position.set(0, 1.84, 0);
+      leaf.rotation.set(Math.PI / 2 - 0.22, 0, ang);
+      leaf.castShadow = true;
       this.fruitGroup.add(leaf);
     }
 
-    // 3. Luz pontual suave de néctar doce
-    const fruitLight = new THREE.PointLight(0xef4444, 2.5, 12);
-    fruitLight.position.set(0, 2.5, 0);
+    // 4. Pedicelo / Cabinho verde curvado
+    const stalkCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 1.84, 0),
+      new THREE.Vector3(0.06, 2.12, 0.04),
+      new THREE.Vector3(0.18, 2.36, 0.10)
+    ]);
+    const stalkGeo = new THREE.TubeGeometry(stalkCurve, 8, 0.05, 6, false);
+    const stalkMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.5 });
+    const stalk = new THREE.Mesh(stalkGeo, stalkMat);
+    stalk.castShadow = true;
+    this.fruitGroup.add(stalk);
+
+    // 5. Luz pontual suave de néctar doce
+    const fruitLight = new THREE.PointLight(0xf43f5e, 1.8, 8);
+    fruitLight.position.set(0, 1.2, 0);
     this.fruitGroup.add(fruitLight);
 
-    // 4. Partículas flutuantes de néctar & aroma
-    const pCount = 35;
+    // 6. Partículas flutuantes de aroma adocicado do morango
+    const pCount = 32;
     const pGeo = new THREE.BufferGeometry();
     const pCoords = [];
     for (let i = 0; i < pCount; i++) {
       pCoords.push(
-        (Math.random() - 0.5) * 4.5,
-        Math.random() * 4.0 + 0.5,
-        (Math.random() - 0.5) * 4.5
+        (Math.random() - 0.5) * 2.6,
+        Math.random() * 2.4 + 0.3,
+        (Math.random() - 0.5) * 2.6
       );
     }
     pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pCoords, 3));
     const pMat = new THREE.PointsMaterial({
-      color: 0xfef08a,
-      size: 0.18,
+      color: 0xfda4af,
+      size: 0.14,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.8,
       blending: THREE.AdditiveBlending
     });
     this.particles = new THREE.Points(pGeo, pMat);
     this.fruitGroup.add(this.particles);
 
-    // 5. Ondas de aroma concêntricas no solo
-    for (let ar = 2.8; ar <= 7.0; ar += 2.0) {
-      const aGeo = new THREE.RingGeometry(ar - 0.05, ar + 0.05, 32);
-      const aMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+    // 7. Ondas de aroma concêntricas no solo ao redor do morango
+    for (let ar = 1.6; ar <= 4.2; ar += 1.3) {
+      const aGeo = new THREE.RingGeometry(ar - 0.04, ar + 0.04, 32);
+      const aMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
       const aMesh = new THREE.Mesh(aGeo, aMat);
       aMesh.rotation.x = -Math.PI / 2;
       aMesh.position.y = 0.02;

@@ -5,6 +5,7 @@ import { VirtualArena } from './environment.js';
 import { ConnectomeVisualizer } from './connectome.js';
 import { NeuralOscilloscope } from './oscilloscope.js';
 import { bioAudio } from './audio.js';
+import { TUTORIAL_CIRCUITS, TUTORIAL_BIO_GUIDE } from './tutorialData.js';
 
 class FlyBrainApp {
   constructor() {
@@ -12,6 +13,7 @@ class FlyBrainApp {
     this.initThree();
     this.initComponents();
     this.initEvents();
+    this.initTutorial();
     this.loadCatalog();
 
     this.activeMode = 'world'; // 'world', 'xray', 'split'
@@ -174,8 +176,7 @@ class FlyBrainApp {
         this.fly.performEscapeJump(0.04);
       } else if (mode === 'landing') {
         this.autoWalk = false;
-        this.fly.isWalking = false;
-        this.fly.isFlying = false;
+        this.fly.initiateBrakeOrLanding();
       }
     }
   }
@@ -268,6 +269,15 @@ class FlyBrainApp {
           break;
         case 'KeyK':
           this.toggleKeyboardGuide();
+          break;
+        case 'KeyT':
+          this.toggleTutorial();
+          break;
+        case 'KeyF':
+          this.triggerFeed();
+          break;
+        case 'Escape':
+          this.closeTutorial();
           break;
       }
     });
@@ -418,6 +428,185 @@ class FlyBrainApp {
     if (guide) guide.classList.toggle('hidden');
   }
 
+  initTutorial() {
+    this.tutorialModal = document.getElementById('tutorial-modal');
+    this.tutorialBody = document.getElementById('tutorial-content-body');
+    this.activeTutorialTab = 'MBON03';
+
+    // Botões de abertura
+    document.getElementById('btn-tutorial')?.addEventListener('click', () => {
+      this.openTutorial();
+    });
+    document.getElementById('btn-open-tutorial-neuro')?.addEventListener('click', () => {
+      this.openTutorial();
+    });
+
+    // Botão de fechar
+    document.getElementById('btn-close-tutorial')?.addEventListener('click', () => {
+      this.closeTutorial();
+    });
+
+    // Fechar ao clicar fora do card
+    this.tutorialModal?.addEventListener('click', (e) => {
+      if (e.target === this.tutorialModal) {
+        this.closeTutorial();
+      }
+    });
+
+    // Abas de seleção de circuito
+    document.querySelectorAll('.tut-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const circuit = e.currentTarget.dataset.circuit;
+        this.selectTutorialTab(circuit);
+      });
+    });
+
+    // Botão de alimentação rápida no card de fome
+    document.getElementById('btn-feed-fly')?.addEventListener('click', () => {
+      this.triggerFeed();
+    });
+  }
+
+  openTutorial(circuitId = null) {
+    if (!this.tutorialModal) return;
+    const target = circuitId || (this.activeCircuit ? this.activeCircuit.id : 'MBON03');
+    this.selectTutorialTab(target);
+    this.tutorialModal.classList.remove('hidden');
+  }
+
+  closeTutorial() {
+    if (!this.tutorialModal) return;
+    this.tutorialModal.classList.add('hidden');
+  }
+
+  toggleTutorial() {
+    if (this.tutorialModal?.classList.contains('hidden')) {
+      this.openTutorial();
+    } else {
+      this.closeTutorial();
+    }
+  }
+
+  triggerFeed() {
+    this.selectCircuit('MBON03');
+    this.autoWalk = true;
+    document.getElementById('btn-walk-toggle').textContent = '⏸️ Pausar Caminhada';
+    const badge = document.getElementById('behavior-badge');
+    badge.className = 'status-pill active';
+    badge.textContent = '🍓 BUSCANDO MORANGO!';
+    bioAudio.playSpike();
+
+    // Se estiver em voo, pousa suavemente ou direciona para o solo
+    if (this.fly.isFlying || this.fly.y > 0.05) {
+      this.fly.initiateBrakeOrLanding();
+    }
+  }
+
+  selectTutorialTab(tabId) {
+    this.activeTutorialTab = tabId;
+    document.querySelectorAll('.tut-tab-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.circuit === tabId);
+    });
+
+    if (tabId === 'BIO') {
+      this.renderBioTab();
+    } else {
+      this.renderCircuitTab(tabId);
+    }
+  }
+
+  renderCircuitTab(circuitId) {
+    const data = TUTORIAL_CIRCUITS[circuitId];
+    if (!data || !this.tutorialBody) return;
+
+    this.tutorialBody.innerHTML = `
+      <div class="tut-circuit-hero">
+        <div class="tut-hero-icon" style="color: ${data.cor}">${data.icone}</div>
+        <div class="tut-hero-text">
+          <h3>${data.nome} (${data.id})</h3>
+          <p>${data.apelido}</p>
+          <span class="tut-roi-pill">📍 Região Anatômica: ${data.roi}</span>
+        </div>
+      </div>
+
+      <div class="tut-grid">
+        <div class="tut-card-box">
+          <h4>🧬 O Que Faz na Biologia Real (Janelia neuPrint)</h4>
+          <p>${data.biologiaReal}</p>
+        </div>
+        <div class="tut-card-box">
+          <h4>🎮 Comportamento no Simulador FlyBrain 3D</h4>
+          <p>${data.efeitoSimulador}</p>
+        </div>
+      </div>
+
+      <div class="tut-stats-strip">
+        <div class="tut-stat-chip">
+          <span>🟡 Pré-sinapses:</span>
+          <strong>${data.dadosNeuprint.pre}</strong>
+        </div>
+        <div class="tut-stat-chip">
+          <span>🔵 Pós-sinapses:</span>
+          <strong>${data.dadosNeuprint.post}</strong>
+        </div>
+        <div class="tut-stat-chip">
+          <span>🌳 Ramos Axonais:</span>
+          <strong>${data.dadosNeuprint.ramos}</strong>
+        </div>
+        <div class="tut-stat-chip">
+          <span>🧪 Neurotransmissor:</span>
+          <strong>${data.dadosNeuprint.neurotransmissor}</strong>
+        </div>
+      </div>
+
+      <div class="tut-action-row">
+        <div class="tut-tip-text">💡 ${data.dica}</div>
+        <button id="btn-tut-test-${data.id}" class="tut-test-btn" style="background: linear-gradient(135deg, ${data.cor}dd 0%, ${data.cor}99 100%)">
+          ⚡ Testar Circuito ${data.id} Agora!
+        </button>
+      </div>
+    `;
+
+    document.getElementById(`btn-tut-test-${data.id}`)?.addEventListener('click', () => {
+      this.selectCircuit(data.id);
+      this.closeTutorial();
+      this.setMode('xray');
+      setTimeout(() => {
+        this.stimulate();
+      }, 300);
+    });
+  }
+
+  renderBioTab() {
+    if (!this.tutorialBody) return;
+    this.tutorialBody.innerHTML = `
+      <div class="tut-circuit-hero">
+        <div class="tut-hero-icon" style="color: #fbbf24">⚡</div>
+        <div class="tut-hero-text">
+          <h3>${TUTORIAL_BIO_GUIDE.titulo}</h3>
+          <p>Como a eletrofisiologia celular, o gasto de glicose e os reflexos mecânicos funcionam juntos</p>
+        </div>
+      </div>
+
+      ${TUTORIAL_BIO_GUIDE.secoes.map((sec) => `
+        <div class="tut-bio-section">
+          <h4>${sec.titulo}</h4>
+          <p>${sec.conteudo}</p>
+        </div>
+      `).join('')}
+
+      <div class="tut-action-row" style="justify-content: flex-end;">
+        <button id="btn-tut-close-bio" class="tut-test-btn">
+          ✨ Entendi! Voltar ao Simulador
+        </button>
+      </div>
+    `;
+
+    document.getElementById('btn-tut-close-bio')?.addEventListener('click', () => {
+      this.closeTutorial();
+    });
+  }
+
   setMode(mode) {
     this.activeMode = mode;
     document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
@@ -508,21 +697,71 @@ class FlyBrainApp {
 
     // Atualiza padrão motor na telemetria
     const teleMode = document.getElementById('tele-motor-mode');
-    if (this.fly.isFeeding) {
+    if (this.fly.isLanding) {
+      teleMode.textContent = '🛑 Freio DNp09: Pouso Suave...';
+    } else if (this.fly.isFeeding) {
       teleMode.textContent = '🍓 Probóscide (Alimentando-se)';
     } else if (this.fly.isFlying) {
-      teleMode.textContent = `🪰 Voo Livre (${this.fly.y.toFixed(1)}m alt)`;
+      if (Math.abs(moveResult.speed) > 0.5) {
+        teleMode.textContent = `🪰 Voo Direcional (${this.fly.y.toFixed(1)}m alt)`;
+      } else {
+        teleMode.textContent = `🪰 Pairando no Ar (${this.fly.y.toFixed(1)}m alt)`;
+      }
     } else if (this.fly.isWalking) {
       teleMode.textContent = '⚡ Marcha Tripodal Ativa';
     } else {
       teleMode.textContent = '💤 Repouso / Grooming';
     }
 
+    // Telemetria de Fome & Metabolismo
+    const hungerVal = Math.round(this.fly.hunger);
+    const navHungerFill = document.getElementById('nav-hunger-fill');
+    const navHungerText = document.getElementById('nav-hunger-text');
+    const teleHungerFill = document.getElementById('tele-hunger-fill');
+    const teleHungerPercent = document.getElementById('tele-hunger-percent');
+    const teleHungerBadge = document.getElementById('tele-hunger-badge');
+    const teleHungerBurn = document.getElementById('tele-hunger-burn');
+
+    if (navHungerFill) navHungerFill.style.width = `${hungerVal}%`;
+    if (navHungerText) navHungerText.textContent = `${hungerVal}% Fome`;
+    if (teleHungerFill) teleHungerFill.style.width = `${hungerVal}%`;
+    if (teleHungerPercent) teleHungerPercent.textContent = `${hungerVal}%`;
+
+    if (teleHungerBadge) {
+      if (hungerVal < 30) {
+        teleHungerBadge.textContent = 'SACIADA (0-30%)';
+        teleHungerBadge.className = 'hunger-badge satiated';
+      } else if (hungerVal < 75) {
+        teleHungerBadge.textContent = 'APETITE MODERADO';
+        teleHungerBadge.className = 'hunger-badge moderate';
+      } else {
+        teleHungerBadge.textContent = 'FAMINTA (CRÍTICA)';
+        teleHungerBadge.className = 'hunger-badge starving';
+      }
+    }
+
+    if (teleHungerBurn) {
+      if (this.fly.isFeeding) {
+        teleHungerBurn.textContent = '🍓 Saciedade (-26x)';
+      } else if (this.fly.isFlying) {
+        teleHungerBurn.textContent = '⚡ Gasto: Voo 210Hz (2.4x)';
+      } else if (this.fly.isWalking) {
+        teleHungerBurn.textContent = '🚶 Gasto: Solo (1.1x)';
+      } else {
+        teleHungerBurn.textContent = '💤 Gasto: Repouso (0.45x)';
+      }
+    }
+
+    // Micro-disparos dopaminérgicos de recompensa no osciloscópio ao sugar néctar
+    if (this.fly.isFeeding && Math.random() < 0.12) {
+      this.oscilloscope.stimulate(35);
+    }
+
     // Atualiza telemetria de passos e asas
     document.getElementById('tele-steps').textContent = this.fly.stepCount;
     document.getElementById('tele-wing-hz').textContent = this.fly.isWalking
       ? '18 Hz'
-      : (this.fly.isFlying ? '210 Hz' : '0 Hz');
+      : (this.fly.isFlying ? '210 Hz' : (this.fly.isLanding ? '40 Hz' : '0 Hz'));
 
     // 2. Passo do osciloscópio
     this.oscilloscope.step(dt * 100);

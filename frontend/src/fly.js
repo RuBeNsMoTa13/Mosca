@@ -20,6 +20,13 @@ export class BiologicalFly {
     this.wingAngle = 0;
     this.isXRay = false;
 
+    // Sistema de Fome & Metabolismo
+    this.hunger = 42.0; // 0 = 100% saciada, 100 = inanição / fome crítica
+    this.metabolicRate = 1.0;
+
+    // Frenagem e Pouso Biológico (DNp09)
+    this.isLanding = false;
+
     // Materiais PBR
     this.cuticleMaterial = new THREE.MeshStandardMaterial({
       color: 0x334155,
@@ -261,36 +268,50 @@ export class BiologicalFly {
     });
   }
 
+  // Acionamento do Freio de Pouso & Desaceleração (Sinapse DNp09)
+  initiateBrakeOrLanding() {
+    if (this.isFlying || this.y > 0.05) {
+      // Se estiver no ar, inicia descida suave de pouso com pernas estendidas e corte de asas
+      this.isLanding = true;
+      this.isWalking = false;
+      this.isFlying = false;
+      bioAudio.playWingFlutter();
+    } else {
+      // Já está no solo: parada imediata / freio total
+      this.isWalking = false;
+      this.isFlying = false;
+      this.isLanding = false;
+    }
+  }
+
   // Atualização em tempo real da animação (chamada a cada frame de renderização)
   update(dt) {
     const time = performance.now() * 0.001;
+
+    // 1. Metabolismo & Fome Biológica
+    let hungerRate = 0.45; // taxa basal em repouso
+    if (this.isFlying) {
+      hungerRate = 2.4; // Batimento alar a 210 Hz tem custo energético altíssimo
+      this.metabolicRate = 2.4;
+    } else if (this.isWalking) {
+      hungerRate = 1.1; // Gasto motor nas 6 pernas
+      this.metabolicRate = 1.2;
+    } else {
+      this.metabolicRate = 1.0;
+    }
+
+    if (this.isFeeding) {
+      // Ao lamber o néctar do morango com a probóscide, sacia a fome rapidamente!
+      this.hunger = Math.max(0, this.hunger - dt * 26.0);
+    } else {
+      this.hunger = Math.min(100, this.hunger + dt * hungerRate);
+    }
 
     // Respiração sutil do abdômen
     const breath = 1.0 + 0.025 * Math.sin(time * 3.5);
     this.abdomen.scale.set(0.95 * breath, 0.85 * breath, 1.6);
 
-    // Batimento / Flutter das asas
-    if (this.isFlying) {
-      this.wingAngle += dt * 85; // Alta velocidade alar (210 Hz biológico)
-      this.wingL.rotation.z = Math.sin(this.wingAngle) * 0.75 - 0.3;
-      this.wingR.rotation.z = -Math.sin(this.wingAngle) * 0.75 + 0.3;
-      // Pernas recolhidas suavemente durante o voo aerodinâmico
-      this.legs.forEach((leg) => {
-        leg.femur.rotation.y = leg.baseAngle;
-        leg.femur.rotation.z = leg.side * 0.35;
-        leg.tibia.rotation.z = -leg.side * 1.35;
-      });
-    } else if (this.isWalking) {
-      // Vibração alar sutil ao caminhar
-      this.wingL.rotation.z = -0.3 + 0.05 * Math.sin(time * 12);
-      this.wingR.rotation.z = 0.3 - 0.05 * Math.sin(time * 12);
-    } else {
-      // Posição de repouso das asas
-      this.wingL.rotation.set(Math.PI / 2, -0.15, -0.3);
-      this.wingR.rotation.set(Math.PI / 2, 0.15, 0.3);
-    }
-
-    // Extensão da probóscide para lamber o açúcar ao chegar perto
+    // 2. Extensão da probóscide para lamber o açúcar ao chegar perto
     if (this.isFeeding) {
       this.proboscisExtend = Math.min(1.0, this.proboscisExtend + dt * 2.5);
       this.proboscis.position.y = -0.4 - 0.45 * this.proboscisExtend;
@@ -301,53 +322,111 @@ export class BiologicalFly {
       this.proboscis.rotation.x = 0.4;
     }
 
-    // Marcha Tripodal Biológica Real (Tripod Gait)
-    if (this.isWalking && !this.isFlying) {
-      this.gaitPhase += dt * 7.5; // Frequência da caminhada
+    // 3. Pouso Suave Controlado (DNp09) ou Voo ou Marcha
+    if (this.isLanding) {
+      // Descida gradual controlada
+      this.isWalking = false;
+      this.y = Math.max(0, this.y - dt * 5.8);
 
-      const prevPhaseInt = Math.floor((this.gaitPhase - dt * 7.5) / Math.PI);
-      const curPhaseInt = Math.floor(this.gaitPhase / Math.PI);
-      if (curPhaseInt > prevPhaseInt) {
-        this.stepCount++;
+      // Desaceleração suave das asas
+      this.wingAngle += dt * 38;
+      this.wingL.rotation.z = Math.sin(this.wingAngle) * 0.4 - 0.2;
+      this.wingR.rotation.z = -Math.sin(this.wingAngle) * 0.4 + 0.2;
+
+      // Postura de trem de pouso reflexo (landing response: pernas estendidas prontas para o choque)
+      this.legs.forEach((leg) => {
+        leg.femur.rotation.y = leg.baseAngle + 0.12 * leg.side;
+        leg.femur.rotation.z = leg.side * 0.48;
+        leg.tibia.rotation.z = -leg.side * 0.85;
+      });
+
+      // Tocou o solo!
+      if (this.y <= 0) {
+        this.y = 0;
+        this.isLanding = false;
+        this.isFlying = false;
+        this.isWalking = false;
         bioAudio.playStep();
       }
-
+    } else if (this.isFlying) {
+      this.isWalking = false;
+      this.wingAngle += dt * 85; // Alta velocidade alar (210 Hz biológico)
+      this.wingL.rotation.z = Math.sin(this.wingAngle) * 0.75 - 0.3;
+      this.wingR.rotation.z = -Math.sin(this.wingAngle) * 0.75 + 0.3;
+      // Pernas recolhidas suavemente durante o voo aerodinâmico
       this.legs.forEach((leg) => {
-        // Tripé A vs Tripé B em oposição de fase (pi radianos)
-        const phaseOffset = leg.group === 'A' ? 0 : Math.PI;
-        const phase = this.gaitPhase + phaseOffset;
-
-        // Swing: perna levanta e avança; Stance: perna apoia e empurra para trás
-        const swing = Math.sin(phase);
-        const lift = Math.max(0, swing); // só sobe na fase positiva
-
-        leg.femur.rotation.y = leg.baseAngle + Math.cos(phase) * 0.32 * leg.side;
-        leg.femur.rotation.z = leg.side * (0.7 - lift * 0.38);
-        leg.tibia.rotation.z = -leg.side * (0.9 + lift * 0.45);
+        leg.femur.rotation.y = leg.baseAngle;
+        leg.femur.rotation.z = leg.side * 0.35;
+        leg.tibia.rotation.z = -leg.side * 1.35;
       });
-
-      // Oscilação vertical e lateral sutil do corpo ao caminhar
-      this.thorax.position.y = 1.6 + 0.06 * Math.abs(Math.sin(this.gaitPhase * 2));
-      this.head.position.y = 1.5 + 0.04 * Math.sin(this.gaitPhase * 2);
-    } else if (!this.isFlying) {
-      // Repouso ou Limpeza de Patas (Grooming)
-      const isGrooming = Math.sin(time * 0.6) > 0.7;
-
-      this.legs.forEach((leg) => {
-        if (isGrooming && (leg.id === 'L1' || leg.id === 'R1')) {
-          // As duas patas dianteiras esfregam uma na outra (comportamento típico de mosca!)
-          const rub = Math.sin(time * 18);
-          leg.femur.rotation.y = leg.baseAngle + rub * 0.18;
-          leg.femur.rotation.z = leg.side * 0.85;
-          leg.tibia.rotation.z = -leg.side * 0.6 + rub * 0.2;
-        } else {
-          leg.femur.rotation.y = leg.baseAngle;
-          leg.femur.rotation.z = leg.side * 0.7;
-          leg.tibia.rotation.z = -leg.side * 0.9;
+    } else {
+      // No solo ou caindo se estiver solto no ar
+      if (this.y > 0.05) {
+        // Proteção contra suspensão no ar: gravidade desce a mosca
+        this.y = Math.max(0, this.y - dt * 7.5);
+        this.isWalking = false;
+        if (this.y <= 0) {
+          this.y = 0;
+          bioAudio.playStep();
         }
-      });
-      this.thorax.position.y = 1.6;
-      this.head.position.y = 1.5;
+      }
+
+      if (this.isWalking && this.y <= 0.05) {
+        // Vibração alar sutil ao caminhar
+        this.wingL.rotation.z = -0.3 + 0.05 * Math.sin(time * 12);
+        this.wingR.rotation.z = 0.3 - 0.05 * Math.sin(time * 12);
+
+        // Marcha Tripodal Biológica Real (Tripod Gait)
+        this.gaitPhase += dt * 7.5; // Frequência da caminhada
+
+        const prevPhaseInt = Math.floor((this.gaitPhase - dt * 7.5) / Math.PI);
+        const curPhaseInt = Math.floor(this.gaitPhase / Math.PI);
+        if (curPhaseInt > prevPhaseInt) {
+          this.stepCount++;
+          bioAudio.playStep();
+        }
+
+        this.legs.forEach((leg) => {
+          // Tripé A vs Tripé B em oposição de fase (pi radianos)
+          const phaseOffset = leg.group === 'A' ? 0 : Math.PI;
+          const phase = this.gaitPhase + phaseOffset;
+
+          // Swing: perna levanta e avança; Stance: perna apoia e empurra para trás
+          const swing = Math.sin(phase);
+          const lift = Math.max(0, swing); // só sobe na fase positiva
+
+          leg.femur.rotation.y = leg.baseAngle + Math.cos(phase) * 0.32 * leg.side;
+          leg.femur.rotation.z = leg.side * (0.7 - lift * 0.38);
+          leg.tibia.rotation.z = -leg.side * (0.9 + lift * 0.45);
+        });
+
+        // Oscilação vertical e lateral sutil do corpo ao caminhar
+        this.thorax.position.y = 1.6 + 0.06 * Math.abs(Math.sin(this.gaitPhase * 2));
+        this.head.position.y = 1.5 + 0.04 * Math.sin(this.gaitPhase * 2);
+      } else {
+        // Posição de repouso das asas
+        this.wingL.rotation.set(Math.PI / 2, -0.15, -0.3);
+        this.wingR.rotation.set(Math.PI / 2, 0.15, 0.3);
+
+        // Repouso ou Limpeza de Patas (Grooming)
+        const isGrooming = Math.sin(time * 0.6) > 0.7;
+
+        this.legs.forEach((leg) => {
+          if (isGrooming && (leg.id === 'L1' || leg.id === 'R1')) {
+            // As duas patas dianteiras esfregam uma na outra
+            const rub = Math.sin(time * 18);
+            leg.femur.rotation.y = leg.baseAngle + rub * 0.18;
+            leg.femur.rotation.z = leg.side * 0.85;
+            leg.tibia.rotation.z = -leg.side * 0.6 + rub * 0.2;
+          } else {
+            leg.femur.rotation.y = leg.baseAngle;
+            leg.femur.rotation.z = leg.side * 0.7;
+            leg.tibia.rotation.z = -leg.side * 0.9;
+          }
+        });
+        this.thorax.position.y = 1.6;
+        this.head.position.y = 1.5;
+      }
     }
 
     // Atualiza posição e inclinação do grupo no mundo 3D
@@ -372,9 +451,23 @@ export class BiologicalFly {
     const isJumpOrFly = keys.jump;
     const isDescendOrLand = keys.descend;
 
+    // Se estiver em processo de pouso controlado (DNp09)
+    if (this.isLanding) {
+      if (isJumpOrFly) {
+        // Usuário cancela pouso e arremete
+        this.isLanding = false;
+        this.isFlying = true;
+        this.y += 1.2;
+        bioAudio.playWingFlutter();
+      } else {
+        const fruitDist = Math.sqrt(Math.pow(this.x - 18.0, 2) + Math.pow(this.z - 14.0, 2));
+        return { speed: 0, fruitDist };
+      }
+    }
+
     // 1. Decolagem / Voo livre / Pouso
     if (isJumpOrFly) {
-      if (!this.isFlying) {
+      if (!this.isFlying && this.y <= 0.05) {
         // Decola do solo!
         this.isFlying = true;
         this.isWalking = false;
@@ -382,39 +475,53 @@ export class BiologicalFly {
         bioAudio.playWingFlutter();
       } else {
         // Sobe na altitude
+        this.isFlying = true;
+        this.isWalking = false;
         this.y = Math.min(14.0, this.y + dt * 6.5);
       }
     }
 
-    if (isDescendOrLand && this.isFlying) {
+    if (isDescendOrLand && (this.isFlying || this.y > 0)) {
       this.y -= dt * 7.5;
       if (this.y <= 0) {
         this.y = 0;
         this.isFlying = false;
+        this.isWalking = false;
         bioAudio.playStep();
       }
     }
 
     // 2. Rotação / Curva (Yaw)
-    const turnSpeed = this.isFlying ? 4.2 : 3.4;
+    const isAirborne = this.isFlying || this.y > 0.05;
+    const turnSpeed = isAirborne ? 4.2 : 3.4;
     if (isTurningLeft) {
       this.heading += turnSpeed * dt;
-      if (this.isFlying) this.group.rotation.z = 0.28; // inclinação de curva em voo (banking)
+      if (isAirborne) this.group.rotation.z = 0.28; // inclinação de curva em voo (banking)
     } else if (isTurningRight) {
       this.heading -= turnSpeed * dt;
-      if (this.isFlying) this.group.rotation.z = -0.28;
+      if (isAirborne) this.group.rotation.z = -0.28;
     } else {
       this.group.rotation.z *= 0.88;
     }
 
     // 3. Deslocamento Frontal / Traseiro
     let speed = 0;
-    if (this.isFlying) {
-      // Velocidade de cruzeiro no ar
-      speed = isMovingForward ? 12.0 : (isMovingBackward ? 4.0 : 8.0);
-      this.x += Math.sin(this.heading) * speed * dt;
-      this.z += Math.cos(this.heading) * speed * dt;
-      this.distanceWalked += speed * dt * 1000;
+    if (isAirborne) {
+      // Voo livre no ar: paira no ar (hovering) parado a menos que o usuário pressione para mover
+      this.isWalking = false;
+      if (isMovingForward) {
+        speed = 12.0; // Avanço de voo
+      } else if (isMovingBackward) {
+        speed = -5.0; // Voo reverso
+      } else {
+        speed = 0; // Pairar estático no ar (sem voar reto sozinho!)
+      }
+
+      if (speed !== 0) {
+        this.x += Math.sin(this.heading) * speed * dt;
+        this.z += Math.cos(this.heading) * speed * dt;
+        this.distanceWalked += Math.abs(speed) * dt * 1000;
+      }
     } else {
       // Locomoção no solo (marcha tripodal)
       if (isMovingForward) {
@@ -442,9 +549,9 @@ export class BiologicalFly {
       this.z = (this.z / rCurrent) * maxR;
     }
 
-    // 5. Detecção de proximidade com a fruta doce (18.0, 0, 14.0)
+    // 5. Detecção de proximidade com o pequeno morango (18.0, 0, 14.0)
     const fruitDist = Math.sqrt(Math.pow(this.x - 18.0, 2) + Math.pow(this.z - 14.0, 2));
-    if (fruitDist < 3.2 && !this.isFlying) {
+    if (fruitDist < 2.8 && this.y <= 0.6) {
       if (!this.isFeeding) {
         this.isFeeding = true;
         bioAudio.playFeedingChime();
@@ -458,12 +565,21 @@ export class BiologicalFly {
 
   // Caminha autonomamente em direção à fruta doce
   walkTowards(targetX, targetZ, speed, dt) {
+    if (this.y > 0.05) {
+      // Se estiver no ar, desce para tocar o solo e iniciar a caminhada
+      this.y = Math.max(0, this.y - dt * 6.5);
+      if (this.y <= 0) {
+        this.y = 0;
+        this.isFlying = false;
+      }
+    }
+
     const dx = targetX - this.x;
     const dz = targetZ - this.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
 
-    if (dist > 3.0) {
-      this.isWalking = true;
+    if (dist > 2.6) {
+      this.isWalking = (this.y <= 0.05);
       this.isFeeding = false;
 
       const targetHeading = Math.atan2(dx, dz);
@@ -478,7 +594,7 @@ export class BiologicalFly {
       this.distanceWalked += stepDist * 1000;
     } else {
       this.isWalking = false;
-      if (!this.isFeeding) {
+      if (!this.isFeeding && this.y <= 0.6) {
         this.isFeeding = true;
         bioAudio.playFeedingChime();
       }
