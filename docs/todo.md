@@ -1,0 +1,111 @@
+# Backlog Oficial de Desenvolvimento — FlyBrain 3D
+
+> **Rastreabilidade e Governança**  
+> **Data / Hora**: 2026-10-05 01:25 (UTC-3)  
+> **Branch**: `main` (repositório local)  
+> **Commit de Referência**: `inicial`  
+> **Status**: Atualizado  
+
+Este documento é a fonte oficial única de backlog e auditoria de funcionalidades do projeto **FlyBrain 3D** (simulador neuromecânico e conectoma 3D da *Drosophila melanogaster*).
+
+---
+
+## 1. O Que Já Foi Implementado (`[x]`)
+
+### 1.1. Pipeline de Dados & Neuroinformática (Python)
+- [x] Conexão com a API neuPrint Janelia Research Campus via dataset `male-cns:v1.0`.
+- [x] Extração e cálculo geométrico de *Convex Hulls* para os volumes cerebrais (`brain_hulls.json`):
+  - [x] Lobo óptico esquerdo e direito.
+  - [x] Cérebro central.
+  - [x] Cordão nervoso ventral.
+- [x] Extração de morfologia neural 3D (esqueletos axonais/dendríticos) e nuvens de sinapses pré e pós com identificação de ROIs:
+  - [x] `MBON03` (Circuito de Recompensa & Alimento).
+  - [x] `ExR5` (Bússola Biológica 360° / Rumo Espacial).
+  - [x] `DNge104` (Reflexo de Fuga Rápida Antiesmagamento).
+  - [x] `s-LNv` (Marcapasso Circadiano Sono/Vigília).
+  - [x] `MBON01` (Memória e Aprendizado Olfativo).
+  - [x] `DNp09` (Freio de Pouso & Desaceleração).
+- [x] Geração automatizada do manifesto de circuitos (`catalog.json`).
+- [x] Scripts de exploração e visualização 2D via `navis` e `neuprint-python`.
+
+### 1.2. Modelo 3D da Mosca & Cinemática Biomecânica
+- [x] Construção anatômica procedural completa em Three.js (`BiologicalFly`):
+  - [x] Cabeça com antenas, aristas, probóscide móvel e olhos facetados compostos.
+  - [x] Tórax e abdômen segmentado com materiais PBR realistas.
+  - [x] Asas translúcidas com refração física (IOR 1.42), estrias e batimento oscilatório de alta frequência.
+  - [x] 6 pernas articuladas (coxa, trocânter, fêmur, tíbia e tarso).
+- [x] Cinemática de marcha tripodal verdadeira (ondas de apoio e balanço em tripés alternados).
+- [x] Mecanismo de extensão da probóscide para alimentação.
+- [x] Transição para Modo Raio-X com exoesqueleto translúcido (vidro/esmerilhado) expondo a anatomia interna.
+- [x] Movimentação manual pelo teclado (WASD para andar, Espaço para decolar, Shift para descer).
+
+### 1.3. Conectoma 3D & Visualizador Cerebral
+- [x] Acoplamento geométrico exato das estruturas neurais dentro da cabeça e nuca da mosca.
+- [x] Renderização de esqueleto neuronal com `THREE.LineSegments` e blending aditivo.
+- [x] Renderização de sinapses em alta performance via `THREE.InstancedMesh` (pré em ciano, pós em magenta).
+- [x] Efeito visual dinâmico de pulso sináptico luminoso propagado por interpolação.
+- [x] Inspecionador de sinapses com Raycasting e tooltip interativo (ROI e coordenadas).
+
+### 1.4. Simulação Biofísica LIF (Leaky Integrate-and-Fire)
+- [x] Modelo biofísico de membrana no osciloscópio (`NeuralOscilloscope`):
+  - [x] Potencial de repouso (-52 mV), limiar (0 mV), pico de ação (+24 mV) e reset (-62 mV).
+  - [x] Decaimento passivo com constante de tempo $\tau = 18\text{ ms}$.
+  - [x] Ruído térmico biológico estocástico.
+- [x] Renderização em Canvas 2D com estética cibernética (grade em mV, linha pontilhada de repouso, brilho neon).
+- [x] Contador de disparos (*spikes*) e indicador de voltagem em tempo real.
+- [x] Injeção de pulso de corrente elétrica ajustável.
+
+### 1.5. Ambiente 3D & Iluminação
+- [x] Arena circular tecnológica com grid holográfico e iluminação PBR com sombras suaves (PCFSoftShadowMap).
+- [x] Modelo 3D de fruta/recompensa com partículas de aroma flutuantes.
+- [x] Partículas de poeira ambiental em suspensão.
+
+### 1.6. Áudio Procedural (Web Audio API)
+- [x] Síntese procedural de zumbido de asas dependente da frequência motora.
+- [x] Estalidos bioelétricos sincronizados com os *spikes* do osciloscópio.
+- [x] Efeitos de passos mecânicos no solo.
+
+### 1.7. Interface HUD & Experiência do Usuário
+- [x] Barra superior com seletor de circuito, botões de modo (Arena, Raio-X, Visão Dupla).
+- [x] Painel de Telemetria Biomecânica recolhível com dados em tempo real.
+- [x] Painel Neurocientífico com osciloscópio integrado e estatísticas do circuito.
+- [x] Modo imersivo (ocultar HUD com tecla H) e tela cheia.
+- [x] Guia de atalhos de teclado (tecla K).
+
+---
+
+## 2. O Que Falta Implementar (`[ ]`)
+
+### 2.1. Conectoma & Neurociência Avançada
+- [ ] **Propagação Direcional de Potencial de Ação**: Implementar onda viajante ao longo do esqueleto neuronal (soma $\to$ axônio $\to$ terminais sinápticos) em vez de apenas brilho uniforme estático.
+- [ ] **Visualização Multi-Circuito / Conectividade Sináptica Cruzada**: Permitir carregar mais de um circuito simultaneamente e destacar conexões sinápticas convergentes (ex: `MBON03` comunicando com `DNge104`).
+- [ ] **Neuropilos e Regiões Cerebrais Específicas**: Adicionar malhas e contornos 3D dedicados para sub-regiões chave (ex: Mushroom Body calyx/lobes, Fan-shaped Body, Protocerebral Bridge).
+- [ ] **API Backend Dinâmica para neuPrint**: Criar servidor leve (FastAPI ou script CLI interativo) que consulte e baixe qualquer neurônio arbitrário por ID ou nome sob demanda, sem precisar reiniciar o frontend.
+
+### 2.2. Biomecânica, Física & Simulação
+- [ ] **Motor de Física Rígida (ex: Rapier.js ou Cannon-es)**:
+  - [ ] Colisão física real com paredes da arena e obstáculos tridimensionais.
+  - [ ] Física de pouso e impacto nas pernas com amortecimento dinâmico.
+- [ ] **Aerodinâmica de Voo Avançada**:
+  - [ ] Sustentação vetorial (*lift/drag*), arrasto do ar e inércia de rotação em curvas fechadas.
+  - [ ] Efeito de solo (*ground effect*) ao voar muito próximo da superfície da arena.
+- [ ] **Interação Interativa com Alimento**: Consumo progressivo da fruta com animação da probóscide tocando o alimento e feedback em tempo real no circuito de recompensa.
+
+### 2.3. Câmera, Modos Visuais & Shaders
+- [ ] **Câmera "Fly Eye" (Visão Composta da Mosca)**:
+  - [ ] Shader de pós-processamento simulando a visão omatídea facetada em hexágonos.
+  - [ ] Simulação de visão sensível à luz polarizada ultravioleta.
+- [ ] **Modo Split Screen WebGL Real**: Divisão da tela com duas câmeras e viewports Three.js independentes (uma acompanhando a mosca no mundo e outra focada no cérebro com zoom orbital micro).
+
+### 2.4. Eletrofisiologia & Dinâmica de Rede
+- [ ] **Sinapses Excitatórias e Inibitórias (EPSP / IPSP)**:
+  - [ ] Modelagem de canais iônicos e neurotransmissores (Acetilcolina vs. GABA/Glutamato).
+  - [ ] Diferenciação visual nas sinapses de acordo com neurotransmissor predito.
+- [ ] **Painel de Controle de Parâmetros Biofísicos**:
+  - [ ] Sliders no HUD para configurar resistência de membrana ($R_m$), capacitância ($C_m$) e limiar de disparo.
+
+### 2.5. Qualidade de Código, Testes & Documentação
+- [x] Criação da Trindade de Governança (`GEMINI.md`, `docs/README.md`, `docs/todo.md`).
+- [ ] Configuração de testes unitários para a cinemática de marcha e simulação LIF (Vitest).
+- [ ] Documentação de fluxo de dados de neuPrint e guia de extensão de novos circuitos em `docs/fluxos/`.
+- [ ] Adição de arquivo `.env.example` com template da chave da Janelia API.

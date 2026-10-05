@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlyBrain 3D — Neurociência, Conectoma & Simulação WebGL</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- 3D Canvas WebGL -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- UI Overlay HUD -->
+    <div id="ui-overlay">
+      <!-- Barra Superior -->
+      <header class="top-nav">
+        <div class="logo-area">
+          <div class="logo-icon">🧬</div>
+          <div class="logo-text">
+            <span class="logo-title">FlyBrain 3D</span>
+            <span class="logo-badge">MaleCNS v1.0 • WebGL Real</span>
+          </div>
+        </div>
+
+        <div class="circuit-picker">
+          <label for="circuit-select">Circuito:</label>
+          <select id="circuit-select" class="cyber-select">
+            <option value="MBON03">🍓 Recompensa & Alimento (MBON03)</option>
+            <option value="ExR5">🧭 Bússola Biológica (ExR5)</option>
+            <option value="DNge104">⚡ Reflexo de Fuga (DNge104)</option>
+            <option value="s-LNv">⏰ Marcapasso Circadiano (s-LNv)</option>
+            <option value="MBON01">🧠 Memória Olfativa (MBON01)</option>
+            <option value="DNp09">🛑 Freio de Pouso (DNp09)</option>
+          </select>
+        </div>
+
+        <div class="mode-toggles">
+          <button id="btn-mode-world" class="mode-btn active" title="Ambiente Físico 3D Macroscópico">
+            🌐 Arena 3D
+          </button>
+          <button id="btn-mode-xray" class="mode-btn" title="Exoesqueleto Translúcido com Cérebro e Sinapses Internos">
+            🔬 Raio-X Neural
+          </button>
+          <button id="btn-mode-split" class="mode-btn" title="Tela Dividida: Arena e Cérebro">
+            🖥️ Visão Dupla
+          </button>
+        </div>
+
+        <div class="top-actions">
+          <button id="btn-audio" class="icon-btn" title="Alternar Efeitos Sonoros Biológicos">
+            🔊
+          </button>
+          <button id="btn-reset-cam" class="icon-btn" title="Resetar Ângulo de Câmera">
+            🎯
+          </button>
+          <button id="btn-toggle-kbd" class="icon-btn" title="Exibir / Ocultar Atalhos [K]">
+            ⌨️
+          </button>
+          <button id="btn-toggle-hud" class="icon-btn" title="Modo Imersivo (Ocultar/Exibir HUD) [H]">
+            👁️
+          </button>
+          <button id="btn-fullscreen" class="icon-btn" title="Alternar Tela Cheia">
+            ⛶
+          </button>
+        </div>
+      </header>
+
+      <!-- Botão de restauração do HUD (quando em modo imersivo) -->
+      <button id="btn-restore-hud" class="restore-hud-btn hidden" title="Restaurar Interface (Atalho: H)">
+        👁️ Exibir HUD
+      </button>
+
+      <!-- Abas de borda para reabrir painéis quando recolhidos -->
+      <button id="tab-open-telemetry" class="hud-edge-tab left-tab hidden" title="Expandir Telemetria Biomecânica">
+        <span class="tab-icon">📊</span> Telemetria
+      </button>
+
+      <button id="tab-open-neuro" class="hud-edge-tab right-tab hidden" title="Expandir Conectoma & Eletrofisiologia">
+        <span class="tab-icon">⚡</span> Conectoma & LIF
+      </button>
+
+      <!-- Painel de Telemetria Biomecânica (Esquerda) -->
+      <aside class="hud-panel left-panel" id="telemetry-panel">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="panel-tag">TELEMETRIA BIOMECÂNICA</span>
+            <span id="behavior-badge" class="status-pill resting">EM REPOUSO</span>
+          </div>
+          <button id="btn-collapse-telemetry" class="panel-minimize-btn" title="Recolher painel lateral">
+            ◀
+          </button>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="tele-item">
+            <span class="tele-label">Padrão Motor</span>
+            <span id="tele-motor-mode" class="tele-val highlight">Marcha no Solo</span>
+          </div>
+          <div class="tele-item">
+            <span class="tele-label">Distância da Fruta</span>
+            <span id="tele-dist-food" class="tele-val">28.4 µm</span>
+          </div>
+          <div class="tele-item">
+            <span class="tele-label">Passos Tripodais</span>
+            <span id="tele-steps" class="tele-val">0</span>
+          </div>
+          <div class="tele-item">
+            <span class="tele-label">Frequência Alar</span>
+            <span id="tele-wing-hz" class="tele-val">0 Hz</span>
+          </div>
+        </div>
+
+        <div class="action-description">
+          <div class="desc-title">🎯 Missão Comportamental:</div>
+          <div id="mission-text" class="desc-content">
+            A mosca está no solo da arena em prontidão. Ao injetar sinal neural, ela usará a marcha tripodal para caminhar diretamente em direção à fruta doce!
+          </div>
+        </div>
+      </aside>
+
+      <!-- Painel Neurocientífico & Osciloscópio (Direita) -->
+      <aside class="hud-panel right-panel" id="neuro-drawer">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="panel-tag">CONECTOMA & ELETROFISIOLOGIA</span>
+            <span id="circuit-roi-tag" class="status-pill roi">MUSHROOM BODY</span>
+          </div>
+          <button id="btn-collapse-neuro" class="panel-minimize-btn" title="Recolher painel lateral">
+            ▶
+          </button>
+        </div>
+
+        <!-- Osciloscópio em Tempo Real -->
+        <div class="osc-card">
+          <div class="osc-header">
+            <span>⚡ Osciloscópio de Membrana (LIF)</span>
+            <span id="osc-voltage-val" class="osc-volt">-52.0 mV</span>
+          </div>
+          <canvas id="osc-canvas" width="330" height="110"></canvas>
+          <div class="osc-footer">
+            <span>Repouso: -52 mV</span>
+            <span id="osc-spikes-count">Spikes: 0</span>
+            <span>Limiar: 0 mV</span>
+          </div>
+        </div>
+
+        <!-- Estatísticas Sinápticas Reais do NeuPrint -->
+        <div class="stats-row">
+          <div class="stat-pill gold">
+            <span class="pill-dot"></span>
+            <span class="pill-title">Pré-sinapses:</span>
+            <span id="stat-pre-count" class="pill-val">800</span>
+          </div>
+          <div class="stat-pill cyan">
+            <span class="pill-dot"></span>
+            <span class="pill-title">Pós-sinapses:</span>
+            <span id="stat-post-count" class="pill-val">800</span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-pill purple">
+            <span class="pill-dot"></span>
+            <span class="pill-title">Ramos Axonais:</span>
+            <span id="stat-branch-count" class="pill-val">9.876</span>
+          </div>
+          <div class="stat-pill green">
+            <span class="pill-dot"></span>
+            <span class="pill-title">Corrente Injetada:</span>
+            <span id="stat-current-val" class="pill-val">150 pA</span>
+          </div>
+        </div>
+
+        <!-- Câmeras Rápidas -->
+        <div class="camera-presets-box">
+          <span class="cam-box-title">🎥 CÂMERAS 3D (OU TECLAS [1]-[5]):</span>
+          <div class="cam-btns">
+            <button class="cam-btn active" data-cam="orbit" title="Câmera Orbital Livre (1)">🌐 Livre</button>
+            <button class="cam-btn" data-cam="follow" title="Seguir Atrás da Mosca (2)">🪰 Seguir</button>
+            <button class="cam-btn" data-cam="head" title="Foco na Cabeça e Olhos (3)">👀 Cabeça</button>
+            <button class="cam-btn" data-cam="fruit" title="Visão da Fruta Doce (4)">🍓 Fruta</button>
+            <button class="cam-btn" data-cam="top" title="Visão Superior Top-Down (5)">📐 Topo</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Dock Inferior Unificado (Controles + Barra de Atalhos Acoplada) -->
+      <div class="bottom-dock-wrapper" id="bottom-dock-wrapper">
+        <!-- Guia Flutuante de Controles pelo Teclado (Docked acima do deck, nunca no meio da tela!) -->
+        <div class="keyboard-guide-bar" id="keyboard-guide-bar">
+          <div class="kbd-pill">
+            <span class="kbd-icon">🎮</span>
+            <span class="kbd-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+            <span class="kbd-label">Mover / Girar</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>ESPAÇO</kbd></span>
+            <span class="kbd-label">Decolar / Subir</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>SHIFT</kbd> / <kbd>C</kbd></span>
+            <span class="kbd-label">Pousar</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>E</kbd></span>
+            <span class="kbd-label">⚡ Injetar Sinapse</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>1</kbd>-<kbd>5</kbd></span>
+            <span class="kbd-label">Câmeras</span>
+          </div>
+          <div class="kbd-divider"></div>
+          <div class="kbd-pill">
+            <span class="kbd-keys"><kbd>H</kbd></span>
+            <span class="kbd-label">HUD</span>
+          </div>
+          <button id="btn-close-kbd" class="kbd-close-btn" title="Ocultar atalhos (reabra com [K] ou no topo)">✕</button>
+        </div>
+
+        <!-- Centro de Controle Inferior -->
+        <footer class="bottom-control-deck" id="bottom-control-deck">
+          <div class="deck-main-action">
+            <button id="btn-stimulate" class="stimulate-btn" title="Injetar estímulo bioelétrico na rede neural">
+              <span class="stim-glow"></span>
+              <span class="stim-icon">⚡</span>
+              <div class="stim-text">
+                <span class="stim-title">INJETAR SINAL NEURAL</span>
+                <span class="stim-hint">Pressione [E], [ENTER] ou clique</span>
+              </div>
+            </button>
+          </div>
+
+          <div class="deck-controls">
+            <button id="btn-walk-toggle" class="control-btn" title="Iniciar ou Pausar Marcha Contínua">
+              ▶️ Caminhar até a Fruta
+            </button>
+            <div class="slider-control">
+              <label for="current-slider">Estímulo:</label>
+              <input type="range" id="current-slider" min="50" max="300" step="25" value="150" />
+              <span id="slider-val">150 pA</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <!-- Tooltip 3D de Sinapses (aparece ao passar o mouse nas esferas) -->
+      <div id="synapse-tooltip" class="synapse-tooltip hidden">
+        <div id="tooltip-title" class="tooltip-title">Pré-sinapse</div>
+        <div id="tooltip-roi" class="tooltip-body">ROI: EB</div>
+        <div id="tooltip-coords" class="tooltip-coords">XYZ: (48200, 32100, 34500)</div>
+      </div>
+    </div>
+
+    <!-- Script Principal Vite -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

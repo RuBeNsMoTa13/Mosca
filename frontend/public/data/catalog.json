@@ -1,0 +1,68 @@
+[
+  {
+    "id": "MBON03",
+    "nome": "Circuito de Recompensa & Alimento",
+    "query": "MBON03",
+    "funcao": "Busca por A\u00e7\u00facar & Dopamina",
+    "local": "Mushroom Body (Lobos Alfa/Beta)",
+    "icone": "\ud83c\udf53",
+    "cor": "#ef4444",
+    "motor_mode": "walk_food",
+    "motor_desc": "Marcha voraz pelo solo em dire\u00e7\u00e3o \u00e0 fruta doce, estendendo a prob\u00f3scide para sugar n\u00e9ctar."
+  },
+  {
+    "id": "ExR5",
+    "nome": "B\u00fassola Biol\u00f3gica 360\u00b0",
+    "query": "ExR5",
+    "funcao": "Navega\u00e7\u00e3o Espacial & Rumo",
+    "local": "Corpo Elipsoide (Centro da Cabe\u00e7a)",
+    "icone": "\ud83e\udded",
+    "cor": "#38bdf8",
+    "motor_mode": "patrol",
+    "motor_desc": "Ronda circular no solo guiada pela luz solar polarizada, mantendo rumo memorizado."
+  },
+  {
+    "id": "DNge104",
+    "nome": "Reflexo de Fuga R\u00e1pida",
+    "query": "DNge104",
+    "funcao": "Escape Antiesmagamento (<10ms)",
+    "local": "Cabe\u00e7a descendo para as Pernas",
+    "icone": "\u26a1",
+    "cor": "#f59e0b",
+    "motor_mode": "escape",
+    "motor_desc": "Agachamento imediato e salto catapulta de emerg\u00eancia para longe da sombra amea\u00e7adora."
+  },
+  {
+    "id": "s-LNv",
+    "nome": "Marcapasso Circadiano (Sono/Vig\u00edlia)",
+    "query": "s-LNv",
+    "funcao": "Ciclo Biol\u00f3gico de 24h & Despertar",
+    "local": "Lobos Laterais para o Centro",
+    "icone": "\u23f0",
+    "cor": "#a855f7",
+    "motor_mode": "walk",
+    "motor_desc": "Caminhada explorat\u00f3ria diurna em linha reta sob a luz matinal da arena."
+  },
+  {
+    "id": "MBON01",
+    "nome": "Mem\u00f3ria & Aprendizado Olfativo",
+    "query": "MBON01",
+    "funcao": "Mem\u00f3ria de Longo Prazo & Esquiva",
+    "local": "Mushroom Body (Hipocampo da Mosca)",
+    "icone": "\ud83e\udde0",
+    "cor": "#ec4899",
+    "motor_mode": "walk",
+    "motor_desc": "Desvio r\u00e1pido de rota ao detectar odor previamente associado a perigo."
+  },
+  {
+    "id": "DNp09",
+    "nome": "Freio de Pouso & Parada",
+    "query": "DNp09",
+    "funcao": "Desacelera\u00e7\u00e3o de Voo & Pouso Suave",
+    "local": "Nuca descendo para Asas e Patas",
+    "icone": "\ud83d\uded1",
+    "cor": "#f87171",
+    "motor_mode": "landing",
+    "motor_desc": "Corte do batimento de asas e extens\u00e3o das 6 pernas para amortecer o contato no solo."
+  }
+]
