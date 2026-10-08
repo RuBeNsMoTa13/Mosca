@@ -1,0 +1,10 @@
+# Dependências Python para FlyBrain 3D (Neuroinformática e Extração neuPrint)
+# Recomendado Python 3.10+
+
+neuprint-python>=0.4.26
+navis>=1.5.0
+scipy>=1.10.0
+numpy>=1.24.0
+pandas>=2.0.0
+python-dotenv>=1.0.0
+matplotlib>=3.7.0

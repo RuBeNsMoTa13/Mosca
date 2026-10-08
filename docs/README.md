@@ -14,12 +14,15 @@ Bem-vindo à documentação oficial do **FlyBrain 3D**, um simulador interativo 
 
 Abaixo estão os documentos oficiais organizados por categoria:
 
-### 1. Auditoria e Backlog
-- [docs/todo.md](file:///c:/Users/Rubens/Desktop/projetinhos/Mosca/docs/todo.md): **Backlog Oficial Único** com status detalhado de itens implementados (`- [x]`) e pendentes (`- [ ]`).
+### 1. Guias Rápidos e Execução
+- [README.md](file:///c:/Users/ruben/Desktop/Projetinhos/Mosca/README.md): **Guia Principal de Execução**, controles de simulação 3D, atalhos de teclado e pipeline de dados.
 
-### 2. Arquitetura e Engenharia
-- [GEMINI.md](file:///c:/Users/Rubens/Desktop/projetinhos/Mosca/GEMINI.md): Fonte primária da verdade arquitetural, stack tecnológica, convenções de desenvolvimento e guia do sistema.
+### 2. Auditoria e Backlog
+- [docs/todo.md](file:///c:/Users/ruben/Desktop/Projetinhos/Mosca/docs/todo.md): **Backlog Oficial Único** com status detalhado de itens implementados (`- [x]`) e pendentes (`- [ ]`).
 
-### 3. Fontes de Dados e Referências Científicas
+### 3. Arquitetura e Engenharia
+- [GEMINI.md](file:///c:/Users/ruben/Desktop/Projetinhos/Mosca/GEMINI.md): Fonte primária da verdade arquitetural, stack tecnológica, convenções de desenvolvimento e guia do sistema.
+
+### 4. Fontes de Dados e Referências Científicas
 - **Janelia Research Campus / neuPrint**: Base de conectômica `male-cns:v1.0`.
 - **FlyEM / FlyWire Project**: Mapeamento de sinapses e morfologia de neurônios da mosca-das-frutas.

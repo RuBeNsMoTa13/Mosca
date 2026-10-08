@@ -118,5 +118,6 @@ Este documento é a fonte oficial única de backlog e auditoria de funcionalidad
 ### 2.5. Qualidade de Código, Testes & Documentação
 - [x] Criação da Trindade de Governança (`GEMINI.md`, `docs/README.md`, `docs/todo.md`).
 - [ ] Configuração de testes unitários para a cinemática de marcha e simulação LIF (Vitest).
-- [ ] Documentação de fluxo de dados de neuPrint e guia de extensão de novos circuitos em `docs/fluxos/`.
-- [ ] Adição de arquivo `.env.example` com template da chave da Janelia API.
+- [x] Adição de arquivo `.env.example` com template da chave da Janelia API.
+- [x] Criação do [README.md](file:///c:/Users/ruben/Desktop/Projetinhos/Mosca/README.md) raiz e `requirements.txt` com instruções completas de execução e controles.
+- [x] Configuração de [package.json](file:///c:/Users/ruben/Desktop/Projetinhos/Mosca/package.json) na raiz com NPM Workspaces para execução direta.
